@@ -8,6 +8,7 @@
     "startDatabase": "docker compose up --detach",
     "stopDatabase": "docker compose down",
     "seedDatabase": "tsx --env-file .env ./database/seed.ts",
+    "type-check": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -19,6 +20,8 @@
     "pg": "^8.20.0"
   },
   "devDependencies": {
-    "tsx": "^4.21.0"
+    "@types/node": "^25.6.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
   }
 }
