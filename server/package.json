@@ -7,6 +7,7 @@
     "start": "tsx --env-file .env ./app.ts",
     "startDatabase": "docker compose up --detach",
     "stopDatabase": "docker compose down",
+    "seedDatabase": "tsx --env-file .env ./database/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
