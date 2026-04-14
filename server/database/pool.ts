@@ -1,5 +1,6 @@
-const { Pool } = require("pg");
+import pg, { type Pool } from "pg";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_CONNECTION_STRING });
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_CONNECTION_STRING });
 
-module.exports = pool;
+export type DbPool = Pool;
+export default pool;

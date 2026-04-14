@@ -1,10 +1,9 @@
-const pool = require("./pool.ts");
-const path = require("node:path");
-const fs = require("node:fs");
+import pool, { type DbPool } from "./pool";
+import path from "node:path";
+import fs from "node:fs";
 
-async function queryDatabaseWithFile(pool, filePath) {
-    const readFileOptions = { encoding: "utf-8", flag: "r" };
-    const sql = fs.readFileSync(filePath, readFileOptions);
+async function queryDatabaseWithFile(pool: DbPool, filePath: string) {
+    const sql = fs.readFileSync(filePath, { encoding: "utf-8", flag: "r" });
     return await pool.query(sql);
 }
 
