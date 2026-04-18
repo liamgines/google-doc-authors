@@ -1,21 +1,13 @@
-import pool, { type DbPool } from "./pool";
+import pool from "./pool";
 import path from "node:path";
-import fs from "node:fs";
+import { databaseQueryWithFile } from "./helpers";
 
-async function queryDatabaseWithFile(pool: DbPool, filePath: string) {
-    const sql = fs.readFileSync(filePath, { encoding: "utf-8", flag: "r" });
-    return await pool.query(sql);
-}
+const CREATE_SESSION_TABLE_SQL_FILE_PATH = "../node_modules/connect-pg-simple/table.sql";
 
 async function seedDatabase() {
-    await queryDatabaseWithFile(pool, path.join(__dirname, "./reset.sql"));
-    await queryDatabaseWithFile(pool, path.join(__dirname,  "./seed.sql"));
-
-    /*
-    await pool.query(`INSERT INTO authors DEFAULT VALUES`);
-    const result = await pool.query(`SELECT * FROM authors`);
-    console.log(result.rows);
-    */
+    await databaseQueryWithFile(pool, path.join(__dirname, "./reset.sql"));
+    await databaseQueryWithFile(pool, path.join(__dirname,  "./seed.sql"));
+    await databaseQueryWithFile(pool, path.join(__dirname, CREATE_SESSION_TABLE_SQL_FILE_PATH));
 
     await pool.end();
 };
