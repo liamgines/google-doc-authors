@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "types": ["node", "express", "pg"],
+        "types": ["node", "express", "pg", "google-auth-library", "express-session", "connect-pg-simple"],
 
         // Treat files as modules even if it doesn't use import/export
         "moduleDetection": "force",
