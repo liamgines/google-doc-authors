@@ -1,6 +1,6 @@
 import express, { type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
-import { OAuth2Client, type TokenPayload } from "google-auth-library";
+import { OAuth2Client, type TokenPayload, type Credentials } from "google-auth-library";
 //https://expressjs.com/en/resources/middleware/session.html
 import session, { type Session } from "express-session";
 import connectPgSimple from "connect-pg-simple";
@@ -12,6 +12,7 @@ const port = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());    // To parse application/json
+app.use(express.urlencoded({ extended: true }));  // To parse application/x-www-form-urlencoded
 
 interface User {
     id: number,
@@ -20,15 +21,17 @@ interface User {
 
 // https://stackoverflow.com/a/73270492/32242805
 interface ExtendedSession extends Session {
-    user?: User | null;
+    user?: User | null,
+    userTokens?: Credentials
 }
 
-function clientUserMake(id: number) {
-    return { id: id };
+// Including the access token here is used to access the Google Picker on the client
+function clientUserMake(id: number, accessToken: string) {
+    return { id: id, accessToken: accessToken};
 }
 
-function userToClientUser(user: User | null | undefined) {
-    if (user) return clientUserMake(user.id);
+function userToClientUser(user: User | null | undefined, accessToken: string = "") {
+    if (user) return clientUserMake(user.id, accessToken);
     return null;
 }
 
@@ -51,6 +54,9 @@ const sessionStore = new connectPgSession({ pool: pool });
 app.use(session({ secret: process.env.EXPRESS_SESSION_SECRET as string, resave: false, saveUninitialized: true, cookie: { maxAge: MILLISECONDS_PER_SESSION }, store: sessionStore }));
 
 const authenticationClient = new OAuth2Client();
+// https://blog.maffin.io/posts/client-side-google-authorization-code-model
+const authorizationClientOptions = { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, redirectUri: "postmessage" };
+const authorizationClient = new OAuth2Client(authorizationClientOptions);
 
 async function googleVerifySignIn(token: string): Promise<string | null> {
     try {
@@ -58,6 +64,9 @@ async function googleVerifySignIn(token: string): Promise<string | null> {
         const payload: TokenPayload | undefined = ticket.getPayload();
 
         if (!payload) return null; 
+
+        const emailVerified: boolean = payload.email_verified || false;
+        if (!emailVerified) return null;
 
         const googleAccountId: string = payload["sub"];
         return googleAccountId;
@@ -118,6 +127,57 @@ app.get("/api/auth/signed-in-google-user", async (request: Request, response: Re
     return response.json(null);
 });
 
+function requestIsAuthorizedWithGoogle(request: Request, response: Response, next: NextFunction) {
+    const userSession = (request.session as ExtendedSession);
+    if (userSession.user && userSession.userTokens) return next();
+    return next("route");
+}
+
+app.get("/api/authorize/user-with-google-drive-access", requestIsAuthorizedWithGoogle, async (request: Request, response: Response) => {
+    const userSession = (request.session as ExtendedSession);
+    const user: User | null | undefined = userSession.user;
+    const tokens: Credentials = userSession.userTokens || {};
+    const accessToken = tokens.access_token || "";
+    return response.json(userToClientUser(user, accessToken));
+});
+
+app.get("/api/authorize/user-with-google-drive-access", async (request: Request, response: Response) => {
+    return response.json(null);
+});
+
+app.post("/api/authorize/google-drive-access", async (request: Request, response: Response, next: NextFunction) => {
+    const authorizationCode = request.body.code as string;
+    const googleResponse = await authorizationClient.getToken(authorizationCode);
+    const tokens: Credentials = googleResponse.tokens;
+
+    const idToken = tokens.id_token;
+    const accessToken: string = tokens.access_token || "";
+    if (!idToken || !accessToken) return response.json({ message: "Google authorization failed due to invalid id token or invalid access token" });
+
+    const googleAccountId: string | null = await googleVerifySignIn(idToken);
+    const scope: Array<string> = (tokens.scope) ? tokens.scope.split(" ") : [];
+    const scopeIncludesDriveFiles = scope.includes("https://www.googleapis.com/auth/drive.file");
+
+    if (!googleAccountId || !scopeIncludesDriveFiles) return response.status(500).json({ message: "Google authorization failed due to invalid id token or missing scope" });
+
+    const user = await usersTable.createUserIfNotExists(googleAccountId);
+    if (!user) return response.status(500).json({ message: "Account could not be created or located" });
+
+    // Now that we've confirmed that there's an account in the database, create "a logged-in user session" (https://developers.google.com/identity/gsi/web/guides/verify-google-id-token#post).
+    function serverOnSessionSave(error: any) {
+        if (error) return next(error);
+        return response.json(userToClientUser(user, accessToken));
+    }
+    function serverOnSessionRegenerate(error: any) {
+        if (error) return next(error);
+        (request.session as ExtendedSession).user = user;
+        (request.session as ExtendedSession).userTokens = tokens;
+        return request.session.save(serverOnSessionSave);
+    }
+    return request.session.regenerate(serverOnSessionRegenerate);
+});
+
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
 });
+
