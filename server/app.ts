@@ -20,7 +20,7 @@ interface User {
 }
 
 // https://stackoverflow.com/a/73270492/32242805
-interface ExtendedSession extends Session {
+interface UserSession extends Session {
     user?: User | null,
     userTokens?: Credentials
 }
@@ -92,14 +92,14 @@ app.post("/api/auth/google-sign-in", async (request: Request, response: Response
     }
     function serverOnSessionRegenerate(error: any) {
         if (error) return next(error);
-        (request.session as ExtendedSession).user = user;
+        (request.session as UserSession).user = user;
         return request.session.save(serverOnSessionSave);
     }
     return request.session.regenerate(serverOnSessionRegenerate);
 });
 
 app.get("/api/auth/google-logout", async (request: Request, response: Response, next: NextFunction) => {
-    (request.session as ExtendedSession).user = null;
+    (request.session as UserSession).user = null;
 
     function serverOnSessionRegenerate(error: any) {
         if (error) return next(error);
@@ -114,12 +114,12 @@ app.get("/api/auth/google-logout", async (request: Request, response: Response, 
 });
 
 function requestIsFromGoogleUser(request: Request, response: Response, next: NextFunction) {
-    if ((request.session as ExtendedSession).user) return next();
+    if ((request.session as UserSession).user) return next();
     return next("route");
 }
 
 app.get("/api/auth/signed-in-google-user", requestIsFromGoogleUser, async (request: Request, response: Response) => {
-    const user: User | null | undefined = (request.session as ExtendedSession).user;
+    const user: User | null | undefined = (request.session as UserSession).user;
     return response.json(userToClientUser(user));
 });
 
@@ -128,13 +128,13 @@ app.get("/api/auth/signed-in-google-user", async (request: Request, response: Re
 });
 
 function requestIsAuthorizedWithGoogle(request: Request, response: Response, next: NextFunction) {
-    const userSession = (request.session as ExtendedSession);
+    const userSession = (request.session as UserSession);
     if (userSession.user && userSession.userTokens) return next();
     return next("route");
 }
 
 app.get("/api/authorize/user-with-google-drive-access", requestIsAuthorizedWithGoogle, async (request: Request, response: Response) => {
-    const userSession = (request.session as ExtendedSession);
+    const userSession = (request.session as UserSession);
     const user: User | null | undefined = userSession.user;
     const tokens: Credentials = userSession.userTokens || {};
     const accessToken = tokens.access_token || "";
@@ -170,8 +170,8 @@ app.post("/api/authorize/google-drive-access", async (request: Request, response
     }
     function serverOnSessionRegenerate(error: any) {
         if (error) return next(error);
-        (request.session as ExtendedSession).user = user;
-        (request.session as ExtendedSession).userTokens = tokens;
+        (request.session as UserSession).user = user;
+        (request.session as UserSession).userTokens = tokens;
         return request.session.save(serverOnSessionSave);
     }
     return request.session.regenerate(serverOnSessionRegenerate);
