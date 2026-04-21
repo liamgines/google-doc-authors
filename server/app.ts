@@ -222,8 +222,20 @@ async function docRevisionIds(docId: string, accessToken: string): Promise<Array
     return revisionIds;
 }
 
-// https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 // https://github.com/tidyverse/googledrive/issues/218
+async function docRevisions(docId: string, revisionIds: Array<string>, accessToken: string): Promise<Array<string>> {
+    let revisionContents: Array<string> = [];
+    for (const revisionId of revisionIds) {
+        let googleResponse = await fetch(`https://docs.google.com/feeds/download/documents/export/Export?id=${docId}&revision=${revisionId}&exportFormat=txt`, { headers: { Authorization: `Bearer ${accessToken}` } });
+        if (!googleResponse.ok) return [];
+
+        let revisionContent: string = await googleResponse.text();
+        revisionContents.push(revisionContent);
+    }
+    return revisionContents;
+}
+
+// https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
     const docId = request.body.docId;
 
@@ -232,9 +244,10 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const accessToken: string = tokens.access_token || "";
 
     const revisionIds = await docRevisionIds(docId, accessToken);
-    if (!revisionIds) return next();
+    const revisionContents: Array<string> = await docRevisions(docId, revisionIds, accessToken);
+    if (!revisionContents) return next();
 
-    return response.json({ revisionIds: revisionIds });
+    return response.json({ revisionContents: revisionContents });
 });
 
 app.listen(port, () => {
