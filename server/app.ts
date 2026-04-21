@@ -216,51 +216,37 @@ interface RevisionList {
     nextPageToken?: string
 }
 
-interface RevisionData {
-    id: string,
-    user?: RevisionUser
-}
-
-function revisionToData(revision: Revision): RevisionData {
-    return { id: revision.id, user: revision.lastModifyingUser };
-}
-
-function revisionListToData(revisionList: RevisionList): Array<RevisionData> {
-    const revisions: Array<Revision> = revisionList.revisions;
-    return revisions.map(revision => revisionToData(revision));
-}
-
 // https://stackoverflow.com/a/78737793/32242805
 // Defaults: "revisions/kind,revisions/id,revisions/mimeType,revisions/modifiedTime"
-async function docRevisionData(docId: string, accessToken: string): Promise<Array<RevisionData>> {
-    const revisionDataFields = "revisions/id,revisions/lastModifyingUser";
-    let revisionData: Array<RevisionData> = [];
+async function docRevisions(docId: string, accessToken: string): Promise<Array<Revision>> {
+    const revisionFields = "revisions/id,revisions/lastModifyingUser";
+    let revisions: Array<Revision> = [];
 
-    let googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?fields=${revisionDataFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-    if (!googleResponse.ok) return revisionData;
+    let googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?fields=${revisionFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!googleResponse.ok) return revisions;
 
     let revisionList: RevisionList = await googleResponse.json();
-    revisionData = revisionData.concat(revisionListToData(revisionList));
+    revisions = revisions.concat(revisionList.revisions);
 
     // TODO: Check that this loop works as intended
     while (revisionList.nextPageToken) {
-        googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?pageToken=${revisionList.nextPageToken}&fields=${revisionDataFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+        googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?pageToken=${revisionList.nextPageToken}&fields=${revisionFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
 
         /* "If the token is rejected for any reason, it should be discarded, and pagination should be restarted from the first page of results"
          * (https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list).
          */
-        if (!googleResponse.ok) return await docRevisionData(docId, accessToken);
+        if (!googleResponse.ok) return await docRevisions(docId, accessToken);
 
         revisionList = await googleResponse.json();
-        revisionData = revisionData.concat(revisionListToData(revisionList));
+        revisions = revisions.concat(revisionList.revisions);
     }
-    return revisionData;
+    return revisions;
 }
 
 // https://github.com/tidyverse/googledrive/issues/218
-async function docRevisions(docId: string, revisionData: Array<RevisionData>, accessToken: string): Promise<Array<string>> {
+async function docRevisionContents(docId: string, revisions: Array<Revision>, accessToken: string): Promise<Array<string>> {
     let revisionContents: Array<string> = [];
-    for (const revision of revisionData) {
+    for (const revision of revisions) {
         let googleResponse = await fetch(`https://docs.google.com/feeds/download/documents/export/Export?id=${docId}&revision=${revision.id}&exportFormat=txt`, { headers: { Authorization: `Bearer ${accessToken}` } });
         if (!googleResponse.ok) return [];
 
@@ -270,8 +256,8 @@ async function docRevisions(docId: string, revisionData: Array<RevisionData>, ac
     return revisionContents;
 }
 
-function revisionDataToUsers(revisionData: Array<RevisionData>) {
-    return revisionData.map(revision => revision.user);
+function revisionsToUsers(revisions: Array<Revision>) {
+    return revisions.map(revision => revision.lastModifyingUser);
 }
 
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
@@ -282,11 +268,12 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const tokens: Credentials = userSession.userTokens || {};
     const accessToken: string = tokens.access_token || "";
 
-    const revisionData = await docRevisionData(docId, accessToken);
-    const revisionContents: Array<string> = await docRevisions(docId, revisionData, accessToken);
+    const revisions = await docRevisions(docId, accessToken);
+    const revisionContents: Array<string> = await docRevisionContents(docId, revisions, accessToken);
     if (!revisionContents) return next();
 
-    return response.json({ revisionContents: revisionContents, revisionUsers: revisionDataToUsers(revisionData) });
+    const revisionUsers = revisionsToUsers(revisions);
+    return response.json({ revisionContents: revisionContents, revisionUsers: revisionUsers });
 });
 
 app.listen(port, () => {
