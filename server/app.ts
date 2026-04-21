@@ -179,12 +179,35 @@ app.post("/api/authorize/google-drive-access", async (request: Request, response
 
 type RevisionKind = "drive#revision";
 type RevisionListKind = "drive#revisionList";
+type RevisionUserKind = "drive#user";
 
+// https://developers.google.com/workspace/drive/api/reference/rest/v3/User
+interface RevisionUser {
+    displayName: string,
+    kind: RevisionUserKind,
+    me: boolean,
+    permissionId?: string,
+    emailAddress?: string,
+    photoLink?: string
+}
+
+// Optional due to specifying custom fields in the url (except id)
+// https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions
 interface Revision {
-    kind: RevisionKind,
+    exportLinks?: object,
     id: string,
-    mimeType: string,
-    modifiedTime: string
+    mimeType?: string,
+    kind?: RevisionKind,
+    published?: boolean,
+    keepForever?: boolean,
+    md5Checksum?: string,
+    modifiedTime?: string,
+    publishAuto?: boolean,
+    publishedOutsideDomain?: boolean,
+    publishedLink?: string,
+    size?: string,
+    originalFilename?: string,
+    lastModifyingUser?: RevisionUser
 }
 
 interface RevisionList {
@@ -193,46 +216,62 @@ interface RevisionList {
     nextPageToken?: string
 }
 
-function revisionListToIds(revisionList: RevisionList) {
-    const revisions: Array<Revision> = revisionList.revisions;
-    return revisions.map(revision => revision.id);
+interface RevisionData {
+    id: string,
+    user?: RevisionUser
 }
 
-async function docRevisionIds(docId: string, accessToken: string): Promise<Array<string>> {
-    let revisionIds: Array<string> = [];
+function revisionToData(revision: Revision): RevisionData {
+    return { id: revision.id, user: revision.lastModifyingUser };
+}
 
-    let googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions`, { headers: { Authorization: `Bearer ${accessToken}` } });
-    if (!googleResponse.ok) return revisionIds;
+function revisionListToData(revisionList: RevisionList): Array<RevisionData> {
+    const revisions: Array<Revision> = revisionList.revisions;
+    return revisions.map(revision => revisionToData(revision));
+}
+
+// https://stackoverflow.com/a/78737793/32242805
+// Defaults: "revisions/kind,revisions/id,revisions/mimeType,revisions/modifiedTime"
+async function docRevisionData(docId: string, accessToken: string): Promise<Array<RevisionData>> {
+    const revisionDataFields = "revisions/id,revisions/lastModifyingUser";
+    let revisionData: Array<RevisionData> = [];
+
+    let googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?fields=${revisionDataFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!googleResponse.ok) return revisionData;
 
     let revisionList: RevisionList = await googleResponse.json();
-    revisionIds = revisionIds.concat(revisionListToIds(revisionList));
+    revisionData = revisionData.concat(revisionListToData(revisionList));
 
     // TODO: Check that this loop works as intended
     while (revisionList.nextPageToken) {
-        googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?pageToken=${revisionList.nextPageToken}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+        googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?pageToken=${revisionList.nextPageToken}&fields=${revisionDataFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
 
         /* "If the token is rejected for any reason, it should be discarded, and pagination should be restarted from the first page of results"
          * (https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list).
          */
-        if (!googleResponse.ok) return await docRevisionIds(docId, accessToken);
+        if (!googleResponse.ok) return await docRevisionData(docId, accessToken);
 
         revisionList = await googleResponse.json();
-        revisionIds = revisionIds.concat(revisionListToIds(revisionList));
+        revisionData = revisionData.concat(revisionListToData(revisionList));
     }
-    return revisionIds;
+    return revisionData;
 }
 
 // https://github.com/tidyverse/googledrive/issues/218
-async function docRevisions(docId: string, revisionIds: Array<string>, accessToken: string): Promise<Array<string>> {
+async function docRevisions(docId: string, revisionData: Array<RevisionData>, accessToken: string): Promise<Array<string>> {
     let revisionContents: Array<string> = [];
-    for (const revisionId of revisionIds) {
-        let googleResponse = await fetch(`https://docs.google.com/feeds/download/documents/export/Export?id=${docId}&revision=${revisionId}&exportFormat=txt`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    for (const revision of revisionData) {
+        let googleResponse = await fetch(`https://docs.google.com/feeds/download/documents/export/Export?id=${docId}&revision=${revision.id}&exportFormat=txt`, { headers: { Authorization: `Bearer ${accessToken}` } });
         if (!googleResponse.ok) return [];
 
         let revisionContent: string = await googleResponse.text();
         revisionContents.push(revisionContent);
     }
     return revisionContents;
+}
+
+function revisionDataToUsers(revisionData: Array<RevisionData>) {
+    return revisionData.map(revision => revision.user);
 }
 
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
@@ -243,11 +282,11 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const tokens: Credentials = userSession.userTokens || {};
     const accessToken: string = tokens.access_token || "";
 
-    const revisionIds = await docRevisionIds(docId, accessToken);
-    const revisionContents: Array<string> = await docRevisions(docId, revisionIds, accessToken);
+    const revisionData = await docRevisionData(docId, accessToken);
+    const revisionContents: Array<string> = await docRevisions(docId, revisionData, accessToken);
     if (!revisionContents) return next();
 
-    return response.json({ revisionContents: revisionContents });
+    return response.json({ revisionContents: revisionContents, revisionUsers: revisionDataToUsers(revisionData) });
 });
 
 app.listen(port, () => {
