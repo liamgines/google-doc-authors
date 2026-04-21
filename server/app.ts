@@ -177,6 +177,51 @@ app.post("/api/authorize/google-drive-access", async (request: Request, response
     return request.session.regenerate(serverOnSessionRegenerate);
 });
 
+type RevisionKind = "drive#revision";
+type RevisionListKind = "drive#revisionList";
+
+interface Revision {
+    kind: RevisionKind,
+    id: string,
+    mimeType: string,
+    modifiedTime: string
+}
+
+interface RevisionList {
+    revisions: Array<Revision>,
+    kind: RevisionListKind,
+    nextPageToken?: string
+}
+
+function revisionListToIds(revisionList: RevisionList) {
+    const revisions: Array<Revision> = revisionList.revisions;
+    return revisions.map(revision => revision.id);
+}
+
+async function docRevisionIds(docId: string, accessToken: string): Promise<Array<string>> {
+    let revisionIds: Array<string> = [];
+
+    let googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!googleResponse.ok) return revisionIds;
+
+    let revisionList: RevisionList = await googleResponse.json();
+    revisionIds = revisionIds.concat(revisionListToIds(revisionList));
+
+    // TODO: Check that this loop works as intended
+    while (revisionList.nextPageToken) {
+        googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?pageToken=${revisionList.nextPageToken}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+
+        /* "If the token is rejected for any reason, it should be discarded, and pagination should be restarted from the first page of results"
+         * (https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list).
+         */
+        if (!googleResponse.ok) return await docRevisionIds(docId, accessToken);
+
+        revisionList = await googleResponse.json();
+        revisionIds = revisionIds.concat(revisionListToIds(revisionList));
+    }
+    return revisionIds;
+}
+
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 // https://github.com/tidyverse/googledrive/issues/218
 app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
@@ -184,14 +229,12 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
 
     const userSession = (request.session as UserSession);
     const tokens: Credentials = userSession.userTokens || {};
-    const accessToken = tokens.access_token;
+    const accessToken: string = tokens.access_token || "";
 
+    const revisionIds = await docRevisionIds(docId, accessToken);
+    if (!revisionIds) return next();
 
-    const googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions`, { headers: { Authorization: `Bearer ${accessToken}` } });
-    if (!googleResponse.ok) return next();
-    
-    const revisions = await googleResponse.json();
-    return response.json(revisions);
+    return response.json({ revisionIds: revisionIds });
 });
 
 app.listen(port, () => {
