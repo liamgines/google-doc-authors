@@ -177,7 +177,23 @@ app.post("/api/authorize/google-drive-access", async (request: Request, response
     return request.session.regenerate(serverOnSessionRegenerate);
 });
 
+// https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
+// https://github.com/tidyverse/googledrive/issues/218
+app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
+    const docId = request.body.docId;
+
+    const userSession = (request.session as UserSession);
+    const tokens: Credentials = userSession.userTokens || {};
+    const accessToken = tokens.access_token;
+
+
+    const googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!googleResponse.ok) return next();
+    
+    const revisions = await googleResponse.json();
+    return response.json(revisions);
+});
+
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
 });
-

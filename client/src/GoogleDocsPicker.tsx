@@ -10,6 +10,23 @@ function pick() {
     if (picker) picker.visible = true;
 }
 
+async function userRequestDocAnalysis(event) {
+    try {
+        const docs = event.detail.docs;
+        const docId = docs[0].id;
+
+        const serverResponse = await fetch("/api/docId", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                                                                                      body: new URLSearchParams({ docId: docId }) });
+        if (!serverResponse.ok) return console.error("Document id could not be uploaded");
+
+        const revisions = await serverResponse.json();
+    }
+
+    catch (error) {
+        console.error("Document id upload error:", error);
+    }
+}
+
 function GoogleDocsPicker({ user }) {
     const [render, setRender] = useState(false);
 
@@ -18,7 +35,7 @@ function GoogleDocsPicker({ user }) {
     return (<>
         <button onClick={pick}>Select Document</button>
         <DrivePicker client-id={import.meta.env.VITE_GOOGLE_CLIENT_ID} app-id={import.meta.env.VITE_GOOGLE_APP_ID} developer-key={import.meta.env.VITE_GOOGLE_PICKER_API_KEY} oauth-token={user.accessToken} 
-                     prompt="none" max-items={1} onPicked={(e) => console.log("Selected:", e.detail)} onCanceled={() => console.log("Canceled selection")}>
+                     prompt="none" max-items={1} onPicked={userRequestDocAnalysis}>
             <DrivePickerDocsView mime-types="application/vnd.google-apps.document" mode="DocsViewMode.LIST" select-folder-enabled="false" view-id="DOCUMENTS" />
         </DrivePicker>
     </>);
