@@ -6,6 +6,7 @@ import session, { type Session } from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pool from "./database/pool";
 import * as usersTable from "./database/usersTable";
+import { diffChars } from "diff";
 
 const app = express();
 const port = process.env.PORT;
@@ -260,6 +261,51 @@ function revisionsToUsers(revisions: Array<Revision>) {
     return revisions.map(revision => revision.lastModifyingUser);
 }
 
+interface RevisionChar {
+    permissionId: string,
+    char: string
+}
+
+function revisionCharMake(permissionId: string | undefined, char: string): RevisionChar {
+    return { permissionId: permissionId || "", char: char };
+}
+
+// https://github.com/kpdecker/jsdiff#change-objects
+function revisionUserContentsToChars(users: Array<RevisionUser>, contents: Array<string>): Array<RevisionChar> {
+    let revisionChars: Array<RevisionChar> = [];
+    let maxContentLength = 0;
+    for (let content of contents) {
+        if (maxContentLength < content.length) maxContentLength = content.length;
+    }
+    for (let i = 0; i < maxContentLength; i++) revisionChars.push(revisionCharMake("", "\0"));
+
+    const numContents = contents.length;
+    for (let i = 0; i < numContents - 1; i++) {
+        let prev = contents[i];
+        let next = contents[i + 1];
+        let diff = diffChars(prev, next);
+
+        let j = 0;
+        let k = 0;
+        let revisionCharsCopy = revisionChars.map(revisionChar => revisionChar);
+        diff.forEach(part => {
+            if (part.removed) return;
+
+            let chars = part.value;
+            for (let char of chars) {
+                if (part.added) revisionChars[j++] = revisionCharMake(users[i + 1].permissionId, char);
+                else            revisionChars[j++] = revisionCharsCopy[k++];
+            }
+        });
+    }
+
+    const finalContent = contents[numContents - 1];
+    let endCharsToRemove = maxContentLength - finalContent.length;
+    while (endCharsToRemove--) revisionChars.pop();
+
+    return revisionChars;
+}
+
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
     const docId = request.body.docId;
@@ -273,7 +319,10 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     if (!revisionContents.length) return next();
 
     const revisionUsers = revisionsToUsers(revisions);
-    return response.json({ revisionContents: revisionContents, revisionUsers: revisionUsers });
+
+    // @ts-ignore
+    const revisionChars: Array<RevisionChar> = revisionUserContentsToChars(revisionUsers, revisionContents);
+    return response.json({ revisionChars: revisionChars, revisionUsers: revisionUsers });
 });
 
 app.listen(port, () => {
