@@ -270,7 +270,7 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
 
     const revisions = await docRevisions(docId, accessToken);
     const revisionContents: Array<string> = await docRevisionContents(docId, revisions, accessToken);
-    if (!revisionContents) return next();
+    if (!revisionContents.length) return next();
 
     const revisionUsers = revisionsToUsers(revisions);
     return response.json({ revisionContents: revisionContents, revisionUsers: revisionUsers });
