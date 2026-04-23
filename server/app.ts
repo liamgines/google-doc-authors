@@ -306,6 +306,29 @@ function revisionUserContentsToChars(users: Array<RevisionUser>, contents: Array
     return revisionChars;
 }
 
+interface Quote {
+    permissionId: string,
+    text: string
+}
+
+function quoteMake(permissionId: string = "", text: string = "") {
+    return { permissionId: permissionId, text: text };
+}
+
+function revisionCharsToQuotes(revisionChars: Array<RevisionChar>): Array<Quote> {
+    let quotes : Array<Quote> = [];
+    const numChars = revisionChars.length;
+    for (let i = 0; i < numChars; i++) {
+        let numQuotes = quotes.length;
+
+        let current = revisionChars[i];
+        let authorChanged = (!numQuotes || current.permissionId !== revisionChars[i - 1].permissionId);
+        if (authorChanged) quotes.push(quoteMake(current.permissionId, current.char));
+        else               quotes[numQuotes - 1].text += current.char;
+    }
+    return quotes;
+}
+
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
     const docId = request.body.docId;
@@ -322,7 +345,8 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
 
     // @ts-ignore
     const revisionChars: Array<RevisionChar> = revisionUserContentsToChars(revisionUsers, revisionContents);
-    return response.json({ revisionChars: revisionChars, revisionUsers: revisionUsers });
+    const quotes: Array<Quote> = revisionCharsToQuotes(revisionChars);
+    return response.json({ quotes: quotes, revisionUsers: revisionUsers });
 });
 
 app.listen(port, () => {
