@@ -331,6 +331,8 @@ function revisionCharsToQuotes(revisionChars: Array<RevisionChar>): Array<Quote>
 
 function revisionUsersByPermissionId(revisionUsers: Array<RevisionUser>): any {
     let permissionIdUsers: any = {};
+    // Ensure there is always a placeholder user with no id
+    permissionIdUsers[""] = { displayName: "Anonymous", emailAddress: "N/A" };
     for (let user of revisionUsers) {
         if (user.permissionId !== undefined) permissionIdUsers[user.permissionId] = user;
     }
