@@ -1,5 +1,4 @@
 import { useState } from "react";
-import "./App.css";
 import GoogleAuthorization from "./GoogleAuthorization";
 import GoogleDocsPicker from "./GoogleDocsPicker";
 
