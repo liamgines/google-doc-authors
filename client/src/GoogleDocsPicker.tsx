@@ -5,11 +5,12 @@ import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-
 // https://developers.google.com/workspace/drive/picker/guides/overview
 // https://github.com/googleworkspace/drive-picker-element/tree/main/packages/drive-picker-element#event-details
 
+let setRevisions = null;
+
 function pick() {
     const picker = document.querySelector("drive-picker");
     if (picker) picker.visible = true;
 }
-
 async function userRequestDocAnalysis(event) {
     try {
         const docs = event.detail.docs;
@@ -20,6 +21,7 @@ async function userRequestDocAnalysis(event) {
         if (!serverResponse.ok) return console.error("Document id could not be uploaded");
 
         const revisions = await serverResponse.json();
+        if (setRevisions) setRevisions(revisions);
     }
 
     catch (error) {
@@ -27,8 +29,10 @@ async function userRequestDocAnalysis(event) {
     }
 }
 
-function GoogleDocsPicker({ user }) {
+
+function GoogleDocsPicker({ user, revisionsSetter }) {
     const [render, setRender] = useState(false);
+    setRevisions = revisionsSetter;
 
     if (!user) return (<></>);
     if (!render) return (<button onClick={() => setRender(true)}>Select Document</button>);
