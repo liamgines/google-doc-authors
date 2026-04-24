@@ -5,6 +5,7 @@
   "main": "app.ts",
   "scripts": {
     "start": "tsx --env-file .env ./app.ts",
+    "debug": "tsx --inspect --env-file .env ./app.ts",
     "startDatabase": "docker compose up --detach",
     "stopDatabase": "docker compose down",
     "seedDatabase": "tsx --env-file .env ./database/seed.ts",
