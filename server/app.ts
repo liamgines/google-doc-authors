@@ -289,9 +289,11 @@ function revisionUserContentsToChars(users: Array<RevisionUser>, contents: Array
         let k = 0;
         let revisionCharsCopy = revisionChars.map(revisionChar => revisionChar);
         diff.forEach(part => {
-            if (part.removed) return;
-
             let chars = part.value;
+            if (part.removed) {
+                k += chars.length;
+                return;
+            }
             for (let char of chars) {
                 if (part.added) revisionChars[j++] = revisionCharMake(users[i + 1].permissionId, char);
                 else            revisionChars[j++] = revisionCharsCopy[k++];
