@@ -284,8 +284,8 @@ async function docRevisions(docId: string, accessToken: string): Promise<Array<R
 }
 
 // https://github.com/tidyverse/googledrive/issues/218
-async function docRevisionContents(docId: string, revisions: Array<Revision>, accessToken: string): Promise<Array<string>> {
-    let revisionContents: Array<string> = [];
+async function docRevisionTexts(docId: string, revisions: Array<Revision>, accessToken: string): Promise<Array<string>> {
+    let revisionTexts: Array<string> = [];
     const requestHeaders = { headers: { Authorization: `Bearer ${accessToken}` } };
     for (const revision of revisions) {
         let exportUrl = `https://docs.google.com/feeds/download/documents/export/Export?id=${docId}&revision=${revision.id}&exportFormat=txt`;
@@ -294,10 +294,10 @@ async function docRevisionContents(docId: string, revisions: Array<Revision>, ac
         if (googleResponse.status === STATUS_TOO_MANY_REQUESTS) googleResponse = await fetchWithRetry(exportUrl, requestHeaders);
         if (!googleResponse.ok) return [];
 
-        let revisionContent: string = await googleResponse.text();
-        revisionContents.push(revisionContent);
+        let revisionText: string = await googleResponse.text();
+        revisionTexts.push(revisionText);
     }
-    return revisionContents;
+    return revisionTexts;
 }
 
 function revisionsToUsers(revisions: Array<Revision>) {
@@ -314,18 +314,18 @@ function revisionCharMake(permissionId: string | undefined, char: string): Revis
 }
 
 // https://github.com/kpdecker/jsdiff#change-objects
-function revisionUserContentsToChars(users: Array<RevisionUser>, contents: Array<string>): Array<RevisionChar> {
+function revisionUserTextsToChars(users: Array<RevisionUser>, texts: Array<string>): Array<RevisionChar> {
     let revisionChars: Array<RevisionChar> = [];
-    let maxContentLength = 0;
-    for (let content of contents) {
-        if (maxContentLength < content.length) maxContentLength = content.length;
+    let maxTextLength = 0;
+    for (let text of texts) {
+        if (maxTextLength < text.length) maxTextLength = text.length;
     }
-    for (let i = 0; i < maxContentLength; i++) revisionChars.push(revisionCharMake("", "\0"));
+    for (let i = 0; i < maxTextLength; i++) revisionChars.push(revisionCharMake("", "\0"));
 
-    const numContents = contents.length;
-    for (let i = 0; i < numContents - 1; i++) {
-        let prev = contents[i];
-        let next = contents[i + 1];
+    const numTexts = texts.length;
+    for (let i = 0; i < numTexts - 1; i++) {
+        let prev = texts[i];
+        let next = texts[i + 1];
         let diff = diffChars(prev, next);
 
         let j = 0;
@@ -344,8 +344,8 @@ function revisionUserContentsToChars(users: Array<RevisionUser>, contents: Array
         });
     }
 
-    const finalContent = contents[numContents - 1];
-    let endCharsToRemove = maxContentLength - finalContent.length;
+    const finalText = texts[numTexts - 1];
+    let endCharsToRemove = maxTextLength - finalText.length;
     while (endCharsToRemove--) revisionChars.pop();
 
     return revisionChars;
@@ -393,13 +393,13 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const accessToken: string = tokens.access_token || "";
 
     const revisions = await docRevisions(docId, accessToken);
-    const revisionContents: Array<string> = await docRevisionContents(docId, revisions, accessToken);
-    if (!revisionContents.length) return next();
+    const revisionTexts: Array<string> = await docRevisionTexts(docId, revisions, accessToken);
+    if (!revisionTexts.length) return next();
 
     const revisionUsers = revisionsToUsers(revisions);
 
     // @ts-ignore
-    const revisionChars: Array<RevisionChar> = revisionUserContentsToChars(revisionUsers, revisionContents);
+    const revisionChars: Array<RevisionChar> = revisionUserTextsToChars(revisionUsers, revisionTexts);
     const quotes: Array<Quote> = revisionCharsToQuotes(revisionChars);
     // @ts-ignore
     const permissionIdUsers = revisionUsersByPermissionId(revisionUsers);
