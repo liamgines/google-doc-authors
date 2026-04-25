@@ -8,6 +8,18 @@ import pool from "./database/pool";
 import * as usersTable from "./database/usersTable";
 import { diffChars } from "diff";
 
+const STATUS_TOO_MANY_REQUESTS = 429;
+
+function secondsToMilliseconds(seconds: number) {
+    const MILLISECONDS_PER_SECOND = 1000;
+    const milliseconds = seconds * MILLISECONDS_PER_SECOND;
+    return milliseconds;
+}
+
+// https://developers.google.com/workspace/drive/api/guides/limits
+const SECONDS_PER_REQUEST = 60 / 12000;
+const MILLISECONDS_PER_REQUEST = secondsToMilliseconds(SECONDS_PER_REQUEST);
+
 const app = express();
 const port = process.env.PORT;
 
@@ -217,13 +229,40 @@ interface RevisionList {
     nextPageToken?: string
 }
 
+// https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep
+async function sleepForMilliseconds(milliseconds: number): Promise<any> {
+    return await new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
+async function fetchSleep(url: string, requestHeaders?: any, milliseconds: number = MILLISECONDS_PER_REQUEST) {
+    await sleepForMilliseconds(milliseconds);
+    if (requestHeaders) return await fetch(url, requestHeaders);
+    return await fetch(url);
+}
+
+async function fetchWithRetry(url: string, requestHeaders?: any, numRetries: number = 5) {
+    if (numRetries <= 0) throw new Error("Number of retries must be positive");
+
+    while (numRetries--) {
+        const response = (requestHeaders) ? await fetchSleep(url, requestHeaders) : await fetchSleep(url);
+        if (response.status !== 429) return response;
+
+        const retryAfter = response.headers.get("Retry-After");
+        const secondsTillRetry = (retryAfter) ? parseInt(retryAfter) : Math.pow(2, numRetries);
+        const millisecondsTillRetry = secondsToMilliseconds(secondsTillRetry);
+
+        await sleepForMilliseconds(millisecondsTillRetry);
+    }
+    throw new Error("Max retries exceeded");
+}
+
 // https://stackoverflow.com/a/78737793/32242805
 // Defaults: "revisions/kind,revisions/id,revisions/mimeType,revisions/modifiedTime"
 async function docRevisions(docId: string, accessToken: string): Promise<Array<Revision>> {
     const revisionFields = "revisions/id,revisions/lastModifyingUser";
     let revisions: Array<Revision> = [];
 
-    let googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?fields=${revisionFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    let googleResponse = await fetchSleep(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?fields=${revisionFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!googleResponse.ok) return revisions;
 
     let revisionList: RevisionList = await googleResponse.json();
@@ -231,7 +270,7 @@ async function docRevisions(docId: string, accessToken: string): Promise<Array<R
 
     // TODO: Check that this loop works as intended
     while (revisionList.nextPageToken) {
-        googleResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?pageToken=${revisionList.nextPageToken}&fields=${revisionFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+        googleResponse = await fetchSleep(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?pageToken=${revisionList.nextPageToken}&fields=${revisionFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
 
         /* "If the token is rejected for any reason, it should be discarded, and pagination should be restarted from the first page of results"
          * (https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list).
@@ -247,8 +286,12 @@ async function docRevisions(docId: string, accessToken: string): Promise<Array<R
 // https://github.com/tidyverse/googledrive/issues/218
 async function docRevisionContents(docId: string, revisions: Array<Revision>, accessToken: string): Promise<Array<string>> {
     let revisionContents: Array<string> = [];
+    const requestHeaders = { headers: { Authorization: `Bearer ${accessToken}` } };
     for (const revision of revisions) {
-        let googleResponse = await fetch(`https://docs.google.com/feeds/download/documents/export/Export?id=${docId}&revision=${revision.id}&exportFormat=txt`, { headers: { Authorization: `Bearer ${accessToken}` } });
+        let exportUrl = `https://docs.google.com/feeds/download/documents/export/Export?id=${docId}&revision=${revision.id}&exportFormat=txt`;
+        // https://blog.postman.com/http-error-429/#preventing-429-errors
+        let googleResponse = await fetchSleep(exportUrl, requestHeaders);
+        if (googleResponse.status === STATUS_TOO_MANY_REQUESTS) googleResponse = await fetchWithRetry(exportUrl, requestHeaders);
         if (!googleResponse.ok) return [];
 
         let revisionContent: string = await googleResponse.text();
