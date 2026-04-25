@@ -322,6 +322,13 @@ function revisionUserTextsToChars(users: Array<RevisionUser>, texts: Array<strin
     }
     for (let i = 0; i < maxTextLength; i++) revisionChars.push(revisionCharMake("", "\0"));
 
+    /* If the first text revision is not empty (e.g. when a copy of an existing document is made), these characters may not be accounted for in the return value.
+     * Running the app without the code below before the main loop caused an incomplete document to be displayed where some characters were missing (i.e. where null values were included).
+     * We could attribute these characters to the author who made the document copy (i.e. the first user), but for now, we'll just attribute these initial characters to an empty id instead.
+     */
+    const firstText = texts[0];
+    for (let i = 0; i < firstText.length; i++) revisionChars[i] = revisionCharMake("", firstText[i]);
+
     const numTexts = texts.length;
     for (let i = 0; i < numTexts - 1; i++) {
         let prev = texts[i];
