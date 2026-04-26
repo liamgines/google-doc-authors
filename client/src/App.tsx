@@ -4,8 +4,8 @@ import GoogleDocsPicker from "./GoogleDocsPicker";
 
 const clientUser = await (await fetch("/api/authorize/user-with-google-drive-access")).json();
 
-function QuotesDisplay({ revisions }) {
-    if (!revisions) return (<></>);
+function QuotesDisplay({ user, revisions }) {
+    if (!user || !revisions) return (<></>);
 
     const quotes = revisions.quotes;
     const permissionIdUsers = revisions.permissionIdUsers;
@@ -35,9 +35,9 @@ function App() {
     const [user, setUser] = useState(clientUser);
     const [revisions, setRevisions] = useState(null);
     return (<>
-        <GoogleAuthorization user={user} setUser={setUser} />
+        <GoogleAuthorization user={user} setUser={setUser} setRevisions={setRevisions} />
         <GoogleDocsPicker user={user} revisionsSetter={setRevisions} />
-        <QuotesDisplay revisions={revisions} />
+        <QuotesDisplay user={user} revisions={revisions} />
     </>);
 }
 

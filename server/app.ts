@@ -126,6 +126,11 @@ app.get("/api/auth/google-logout", async (request: Request, response: Response, 
     return request.session.save(serverOnSessionSave);
 });
 
+app.get("/api/authorize/logout", async (request: Request, response: Response) => {
+    (request.session as UserSession).userTokens = undefined;
+    return response.redirect("/api/auth/google-logout");
+});
+
 function requestIsFromGoogleUser(request: Request, response: Response, next: NextFunction) {
     if ((request.session as UserSession).user) return next();
     return next("route");

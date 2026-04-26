@@ -11,7 +11,7 @@ function scriptMake(url: string, async: boolean, defer: boolean, onLoad: () => v
     return script;
 }
 
-function GoogleAuthorization({ user, setUser }) {
+function GoogleAuthorization({ user, setUser, setRevisions }) {
     const [googleAuthorizationCodeClient, setGoogleAuthorizationCodeClient] = useState(null);
 
     async function documentOnUserAuthorization(googleResponse) {
@@ -39,13 +39,21 @@ function GoogleAuthorization({ user, setUser }) {
         googleAuthorizationCodeClient.requestCode();
     }
 
+    async function logout() {
+        const serverResponse = await fetch("/api/authorize/logout");
+        if (!serverResponse.ok) return console.error("Google sign out failed");
+
+        setUser(null);
+        setRevisions(null);
+    }
+
     useEffect(() => {
         const script = scriptMake("https://accounts.google.com/gsi/client", true, true, googleInitAuthorizationCodeClient);
         document.body.appendChild(script);
         return (() => { document.body.removeChild(script); });
     }, []);
 
-    if (user) return (<p>Authorized</p>)
+    if (user) return (<button onClick={logout}>Logout</button>);
     return (<button onClick={authorize}>Authorize</button>)
 }
 
