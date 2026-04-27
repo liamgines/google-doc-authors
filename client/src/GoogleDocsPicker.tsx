@@ -9,23 +9,6 @@ let setRevisions = null;
 let user = null;
 let setUser = null;
 
-async function pick() {
-    const picker = document.querySelector("drive-picker");
-    if (!picker) return;
-
-    const serverResponse = await fetch("/api/authorize/refresh-access-token");
-    if (!serverResponse.ok) {
-        picker.visible = true;
-        return;
-    }
-    const serverResponseJson = await serverResponse.json();
-    const newAccessToken = serverResponseJson.accessToken;
-    const userWithNewAccessToken = { id: user.id , accessToken: newAccessToken };
-    setUser(userWithNewAccessToken);
-
-    picker.visible = true;
-}
-
 async function userRequestDocAnalysis(event) {
     try {
         const docs = event.detail.docs;
@@ -51,8 +34,25 @@ function GoogleDocsPicker({ clientUser, userSetter, revisionsSetter }) {
     setUser = userSetter;
     user = clientUser;
 
+    async function pick() {
+        const picker = document.querySelector("drive-picker");
+        if (!picker && render) return;
+
+        const serverResponse = await fetch("/api/authorize/refresh-access-token");
+        if (!serverResponse.ok) {
+            if (picker) picker.visible = true;
+            return;
+        }
+        const serverResponseJson = await serverResponse.json();
+        const newAccessToken = serverResponseJson.accessToken;
+        const userWithNewAccessToken = { id: user.id , accessToken: newAccessToken };
+        setUser(userWithNewAccessToken);
+
+        if (picker) picker.visible = true;
+    }
+
     if (!user) return (<></>);
-    if (!render) return (<button onClick={() => setRender(true)}>Select Document</button>);
+    if (!render) return (<button onClick={async () => { await pick(); setRender(true); }}>Select Document</button>);
     return (<>
         <button onClick={pick}>Select Document</button>
         <DrivePicker client-id={import.meta.env.VITE_GOOGLE_CLIENT_ID} app-id={import.meta.env.VITE_GOOGLE_APP_ID} developer-key={import.meta.env.VITE_GOOGLE_PICKER_API_KEY} oauth-token={user.accessToken} 
