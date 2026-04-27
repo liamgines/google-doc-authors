@@ -23,12 +23,7 @@ const RGBA_COLORS = HEX_COLORS.map(hex => hexToRGB(hex, USER_COLOR_OPACITY));
 const ANONYMOUS_PERMISSION_ID = "";
 const ANONYMOUS_RGBA_COLOR = hexToRGB(ANONYMOUS_HEX_COLOR, USER_COLOR_OPACITY);
 
-function QuotesDisplay({ user, revisions }) {
-    if (!user || !revisions) return (<></>);
-
-    const quotes = revisions.quotes;
-    const permissionIdUsers = revisions.permissionIdUsers;
-
+function permissionIdUsersToColorMap(permissionIdUsers: any): any {
     let i = 0;
     let permissionIdColors: any = {};
     permissionIdColors[ANONYMOUS_PERMISSION_ID] = ANONYMOUS_RGBA_COLOR;
@@ -41,8 +36,18 @@ function QuotesDisplay({ user, revisions }) {
         permissionIdColors[permissionId] = RGBA_COLORS[i % numColors];
         i++;
     }
+    return permissionIdColors;
+}
 
-    i = 0;
+function QuotesDisplay({ user, revisions }) {
+    if (!user || !revisions) return (<></>);
+
+    const quotes = revisions.quotes;
+    const permissionIdUsers = revisions.permissionIdUsers;
+
+    const permissionIdColors: any = permissionIdUsersToColorMap(permissionIdUsers);
+
+    let i = 0;
     const quoteSpans = quotes.map(quote => {
         let permissionId = quote.permissionId;
         let user = permissionIdUsers[permissionId];
