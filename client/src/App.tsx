@@ -39,6 +39,20 @@ function permissionIdUsersToColorMap(permissionIdUsers: any): any {
     return permissionIdColors;
 }
 
+function UserColorKey({ permissionIdUsers, permissionIdColors }) {
+    let userColorKey = [];
+    let i = 0;
+    for (let permissionId in permissionIdUsers) {
+        let user = permissionIdUsers[permissionId];
+        let userColor = permissionIdColors[permissionId];
+        let userColorItem = (<li key={i++} style={{ color: userColor }}>
+                             <span style={{ color: "black" }}>{user.displayName} ({user.emailAddress})</span>
+                             </li>);
+        userColorKey.push(userColorItem);
+    }
+    return (<ul style={{ listStyleType: "square" }}>{userColorKey}</ul>);
+}
+
 function QuotesDisplay({ user, revisions }) {
     if (!user || !revisions) return (<></>);
 
@@ -58,7 +72,10 @@ function QuotesDisplay({ user, revisions }) {
         // For displaying whitespace properly: https://stackoverflow.com/a/69436906/32242805
         return (<span key={i++} id={permissionId} style={{ backgroundColor: userColor, whiteSpace: "pre-line" }}>{quote.text}</span>);
     });
-    return (<p id="quotes">{quoteSpans}</p>);
+    return (<>
+        <p id="quotes">{quoteSpans}</p>
+        <UserColorKey permissionIdUsers={permissionIdUsers} permissionIdColors={permissionIdColors} />
+    </>);
 }
 
 function App() {
