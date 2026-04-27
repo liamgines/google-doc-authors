@@ -293,6 +293,27 @@ async function fetchWithRetry(url: string, requestHeaders?: any, numRetries: num
     throw new Error("Max retries exceeded");
 }
 
+function revisionsFilterByConsecutiveUser(revisions: Array<Revision>): Array<Revision> {
+    // Should always be at least one initial revision, save it
+    let filteredRevisions = [revisions[0]];
+
+    const numRevisions = revisions.length;
+    for (let i = 1; i < numRevisions;) {
+        let revision = revisions[i];
+        let user = revision.lastModifyingUser as RevisionUser;
+
+        while (++i < numRevisions && revisionUserEqual(user, revisions[i].lastModifyingUser as RevisionUser)) revision = revisions[i];
+
+        filteredRevisions.push(revision);
+    }
+
+    return filteredRevisions;
+}
+
+function revisionUserEqual(a: RevisionUser, b: RevisionUser) {
+    return a.permissionId === b.permissionId && a.emailAddress === b.emailAddress;
+}
+
 // https://stackoverflow.com/a/78737793/32242805
 // Defaults: "revisions/kind,revisions/id,revisions/mimeType,revisions/modifiedTime"
 async function docRevisions(docId: string, accessToken: string): Promise<Array<Revision>> {
@@ -304,6 +325,7 @@ async function docRevisions(docId: string, accessToken: string): Promise<Array<R
 
     let revisionList: RevisionList = await googleResponse.json();
     revisions = revisions.concat(revisionList.revisions);
+    revisions = revisionsFilterByConsecutiveUser(revisions);
 
     // TODO: Check that this loop works as intended
     while (revisionList.nextPageToken) {
@@ -315,7 +337,9 @@ async function docRevisions(docId: string, accessToken: string): Promise<Array<R
         if (!googleResponse.ok) return await docRevisions(docId, accessToken);
 
         revisionList = await googleResponse.json();
-        revisions = revisions.concat(revisionList.revisions);
+        let newRevisions: Array<Revision> = revisionList.revisions;
+        newRevisions = revisionsFilterByConsecutiveUser(newRevisions);
+        revisions = revisions.concat(newRevisions);
     }
     return revisions;
 }
