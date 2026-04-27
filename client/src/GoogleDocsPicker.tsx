@@ -6,11 +6,26 @@ import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-
 // https://github.com/googleworkspace/drive-picker-element/tree/main/packages/drive-picker-element#event-details
 
 let setRevisions = null;
+let user = null;
+let setUser = null;
 
-function pick() {
+async function pick() {
     const picker = document.querySelector("drive-picker");
-    if (picker) picker.visible = true;
+    if (!picker) return;
+
+    const serverResponse = await fetch("/api/authorize/refresh-access-token");
+    if (!serverResponse.ok) {
+        picker.visible = true;
+        return;
+    }
+    const serverResponseJson = await serverResponse.json();
+    const newAccessToken = serverResponseJson.accessToken;
+    const userWithNewAccessToken = { id: user.id , accessToken: newAccessToken };
+    setUser(userWithNewAccessToken);
+
+    picker.visible = true;
 }
+
 async function userRequestDocAnalysis(event) {
     try {
         const docs = event.detail.docs;
@@ -30,9 +45,11 @@ async function userRequestDocAnalysis(event) {
 }
 
 
-function GoogleDocsPicker({ user, revisionsSetter }) {
+function GoogleDocsPicker({ clientUser, userSetter, revisionsSetter }) {
     const [render, setRender] = useState(false);
     setRevisions = revisionsSetter;
+    setUser = userSetter;
+    user = clientUser;
 
     if (!user) return (<></>);
     if (!render) return (<button onClick={() => setRender(true)}>Select Document</button>);

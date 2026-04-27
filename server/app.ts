@@ -195,6 +195,38 @@ app.post("/api/authorize/google-drive-access", async (request: Request, response
     return request.session.regenerate(serverOnSessionRegenerate);
 });
 
+// https://blog.maffin.io/posts/client-side-google-authorization-code-model
+app.get("/api/authorize/refresh-access-token", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
+    const oldTokens = (request.session as UserSession).userTokens as Credentials;
+    const oldAccessToken = oldTokens.access_token as string;
+
+    const expiryTime = oldTokens.expiry_date as number;
+    const tokenExpiryDate: Date = new Date(expiryTime);
+    const currentDate: Date = new Date();
+    if (currentDate < tokenExpiryDate) return response.json({ accessToken: oldAccessToken });
+
+    const refreshToken = oldTokens.refresh_token as string;
+    const refreshAuthorizationClient = new OAuth2Client(authorizationClientOptions);
+    refreshAuthorizationClient.setCredentials({ refresh_token: refreshToken });
+    const googleResponse = await refreshAuthorizationClient.refreshAccessToken();
+    const newTokens: Credentials = googleResponse.credentials;
+    const newAccessToken = newTokens.access_token as string;
+
+    const sameUser = (request.session as UserSession).user;
+
+    function serverOnSessionSave(error: any) {
+        if (error) return next(error);
+        response.json({ accessToken: newAccessToken });
+    }
+    function serverOnSessionRegenerate(error: any) {
+        if (error) return next(error);
+        (request.session as UserSession).userTokens = newTokens;
+        (request.session as UserSession).user = sameUser;
+        return request.session.save(serverOnSessionSave);
+    }
+    return request.session.regenerate(serverOnSessionRegenerate);
+});
+
 type RevisionKind = "drive#revision";
 type RevisionListKind = "drive#revisionList";
 type RevisionUserKind = "drive#user";

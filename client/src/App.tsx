@@ -36,7 +36,7 @@ function App() {
     const [revisions, setRevisions] = useState(null);
     return (<>
         <GoogleAuthorization user={user} setUser={setUser} setRevisions={setRevisions} />
-        <GoogleDocsPicker user={user} revisionsSetter={setRevisions} />
+        <GoogleDocsPicker clientUser={user} userSetter={setUser} revisionsSetter={setRevisions} />
         <QuotesDisplay user={user} revisions={revisions} />
     </>);
 }
