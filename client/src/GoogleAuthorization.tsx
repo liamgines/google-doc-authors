@@ -11,7 +11,7 @@ function scriptMake(url: string, async: boolean, defer: boolean, onLoad: () => v
     return script;
 }
 
-function GoogleAuthorization({ user, setUser, setRevisions }) {
+function GoogleAuthorization({ user, setUser, setRenderPicker, setRevisions }) {
     const [googleAuthorizationCodeClient, setGoogleAuthorizationCodeClient] = useState(null);
 
     async function documentOnUserAuthorization(googleResponse) {
@@ -44,6 +44,7 @@ function GoogleAuthorization({ user, setUser, setRevisions }) {
         if (!serverResponse.ok) return console.error("Google sign out failed");
 
         setUser(null);
+        setRenderPicker(false);
         setRevisions(null);
     }
 

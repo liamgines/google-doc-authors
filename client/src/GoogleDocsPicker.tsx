@@ -28,15 +28,14 @@ async function userRequestDocAnalysis(event) {
 }
 
 
-function GoogleDocsPicker({ clientUser, userSetter, revisionsSetter }) {
-    const [render, setRender] = useState(false);
+function GoogleDocsPicker({ clientUser, userSetter, renderPicker, setRenderPicker, revisionsSetter }) {
     setRevisions = revisionsSetter;
     setUser = userSetter;
     user = clientUser;
 
     async function pick() {
         const picker = document.querySelector("drive-picker");
-        if (!picker && render) return;
+        if (!picker && renderPicker) return;
 
         const serverResponse = await fetch("/api/authorize/refresh-access-token");
         if (!serverResponse.ok) {
@@ -52,7 +51,7 @@ function GoogleDocsPicker({ clientUser, userSetter, revisionsSetter }) {
     }
 
     if (!user) return (<></>);
-    if (!render) return (<button onClick={async () => { await pick(); setRender(true); }}>Select Document</button>);
+    if (!renderPicker) return (<button onClick={async () => { await pick(); setRenderPicker(true); }}>Select Document</button>);
     return (<>
         <button onClick={pick}>Select Document</button>
         <DrivePicker client-id={import.meta.env.VITE_GOOGLE_CLIENT_ID} app-id={import.meta.env.VITE_GOOGLE_APP_ID} developer-key={import.meta.env.VITE_GOOGLE_PICKER_API_KEY} oauth-token={user.accessToken} 

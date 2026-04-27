@@ -34,9 +34,10 @@ function QuotesDisplay({ user, revisions }) {
 function App() {
     const [user, setUser] = useState(clientUser);
     const [revisions, setRevisions] = useState(null);
+    const [renderPicker, setRenderPicker] = useState(false);
     return (<>
-        <GoogleAuthorization user={user} setUser={setUser} setRevisions={setRevisions} />
-        <GoogleDocsPicker clientUser={user} userSetter={setUser} revisionsSetter={setRevisions} />
+        <GoogleAuthorization user={user} setUser={setUser} setRenderPicker={setRenderPicker} setRevisions={setRevisions} />
+        <GoogleDocsPicker clientUser={user} userSetter={setUser} renderPicker={renderPicker} setRenderPicker={setRenderPicker} revisionsSetter={setRevisions} />
         <QuotesDisplay user={user} revisions={revisions} />
     </>);
 }
