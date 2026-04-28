@@ -44,7 +44,7 @@ function UserColorKey({ permissionIdUsers, permissionIdColors }) {
         let user = permissionIdUsers[permissionId];
         let userColor = permissionIdColors[permissionId];
         let userColorItem = (<li key={i++} style={{ color: userColor }}>
-                             <span style={{ color: "black" }}>{user.displayName} ({user.emailAddress})</span>
+                             <span style={{ color: "black" }}>{user.displayName} {user.emailAddress ? `(${user.emailAddress})` : ""}</span>
                              </li>);
         userColorKey.push(userColorItem);
     }
