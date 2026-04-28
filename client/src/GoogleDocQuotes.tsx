@@ -47,7 +47,7 @@ function UserColorKey({ permissionIdUsers, permissionIdColors }) {
     return (<ul style={{ listStyleType: "square" }}>{userColorKey}</ul>);
 }
 
-function QuotesDisplay({ user, revisions }) {
+function GoogleDocQuotes({ user, revisions }) {
     if (!user || !revisions) return (<></>);
 
     const quotes = revisions.quotes;
@@ -72,4 +72,4 @@ function QuotesDisplay({ user, revisions }) {
     </>);
 }
 
-export default QuotesDisplay;
+export default GoogleDocQuotes;

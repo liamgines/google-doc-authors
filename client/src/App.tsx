@@ -1,7 +1,7 @@
 import { useState } from "react";
 import GoogleAuthorization from "./GoogleAuthorization";
 import GoogleDocsPicker from "./GoogleDocsPicker";
-import QuotesDisplay from "./QuotesDisplay";
+import GoogleDocQuotes from "./GoogleDocQuotes";
 
 const clientUser = await (await fetch("/api/authorize/user-with-google-drive-access")).json();
 
@@ -12,7 +12,7 @@ function App() {
     return (<>
         <GoogleAuthorization user={user} setUser={setUser} setRenderPicker={setRenderPicker} setRevisions={setRevisions} />
         <GoogleDocsPicker user={user} setUser={setUser} renderPicker={renderPicker} setRenderPicker={setRenderPicker} setRevisions={setRevisions} />
-        <QuotesDisplay user={user} revisions={revisions} />
+        <GoogleDocQuotes user={user} revisions={revisions} />
     </>);
 }
 
