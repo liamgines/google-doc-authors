@@ -471,7 +471,9 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const quotes: Array<Quote> = revisionCharsToQuotes(revisionChars);
     // @ts-ignore
     const permissionIdUsers = revisionUsersByPermissionId(revisionUsers);
-    return response.json({ quotes: quotes, permissionIdUsers: permissionIdUsers });
+
+    const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers };
+    return response.json(googleDoc);
 });
 
 app.listen(port, () => {
