@@ -371,8 +371,9 @@ interface RevisionChar {
 }
 
 const ORIGINAL_DOC_PERMISSION_ID = "ORIGINAL_DOC";
+const ANONYMOUS_PERMISSION_ID = "";
 function revisionCharMake(permissionId: string | undefined, char: string): RevisionChar {
-    return { permissionId: permissionId || "", char: char };
+    return { permissionId: permissionId || ANONYMOUS_PERMISSION_ID, char: char };
 }
 
 // https://github.com/kpdecker/jsdiff#change-objects
@@ -382,7 +383,7 @@ function revisionUserTextsToChars(users: Array<RevisionUser>, texts: Array<strin
     for (let text of texts) {
         if (maxTextLength < text.length) maxTextLength = text.length;
     }
-    for (let i = 0; i < maxTextLength; i++) revisionChars.push(revisionCharMake("", "\0"));
+    for (let i = 0; i < maxTextLength; i++) revisionChars.push(revisionCharMake(ANONYMOUS_PERMISSION_ID, "\0"));
 
     /* If the first text revision is not empty (e.g. when a copy of an existing document is made), these characters may not be accounted for in the return value.
      * Running the app without the code below before the main loop caused an incomplete document to be displayed where some characters were missing (i.e. where null values were included).
@@ -425,7 +426,7 @@ interface Quote {
     text: string
 }
 
-function quoteMake(permissionId: string = "", text: string = "") {
+function quoteMake(permissionId: string = ANONYMOUS_PERMISSION_ID, text: string = "") {
     return { permissionId: permissionId, text: text };
 }
 
@@ -448,7 +449,7 @@ function revisionUsersByPermissionId(revisionUsers: Array<RevisionUser>): any {
     // Add a placeholder user for the original document (for when the document is a copy of another document)
     permissionIdUsers[ORIGINAL_DOC_PERMISSION_ID] = { displayName: "Original Document", emailAddress: "" };
     // Ensure there is always a placeholder user with no id
-    permissionIdUsers[""] = { displayName: "Anonymous", emailAddress: "N/A" };
+    permissionIdUsers[ANONYMOUS_PERMISSION_ID] = { displayName: "Anonymous User", emailAddress: "" };
     for (let user of revisionUsers) {
         if (user.permissionId !== undefined) permissionIdUsers[user.permissionId] = user;
     }
