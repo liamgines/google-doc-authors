@@ -1,37 +1,27 @@
 import { useState } from "react";
-
 import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-react";
 // https://stackoverflow.com/a/21370109/32242805
 // https://developers.google.com/workspace/drive/picker/guides/overview
 // https://github.com/googleworkspace/drive-picker-element/tree/main/packages/drive-picker-element#event-details
 
-let setRevisions = null;
-let user = null;
-let setUser = null;
+function GoogleDocsPicker({ user, setUser, renderPicker, setRenderPicker, setRevisions }) {
+    async function userRequestDocAnalysis(event) {
+        try {
+            const docs = event.detail.docs;
+            const docId = docs[0].id;
 
-async function userRequestDocAnalysis(event) {
-    try {
-        const docs = event.detail.docs;
-        const docId = docs[0].id;
+            const serverResponse = await fetch("/api/docId", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                                                                                          body: new URLSearchParams({ docId: docId }) });
+            if (!serverResponse.ok) return console.error("Document id could not be uploaded");
 
-        const serverResponse = await fetch("/api/docId", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                                                                                      body: new URLSearchParams({ docId: docId }) });
-        if (!serverResponse.ok) return console.error("Document id could not be uploaded");
+            const revisions = await serverResponse.json();
+            if (setRevisions) setRevisions(revisions);
+        }
 
-        const revisions = await serverResponse.json();
-        if (setRevisions) setRevisions(revisions);
+        catch (error) {
+            console.error("Document id upload error:", error);
+        }
     }
-
-    catch (error) {
-        console.error("Document id upload error:", error);
-    }
-}
-
-
-function GoogleDocsPicker({ clientUser, userSetter, renderPicker, setRenderPicker, revisionsSetter }) {
-    setRevisions = revisionsSetter;
-    setUser = userSetter;
-    user = clientUser;
 
     async function pick() {
         const picker = document.querySelector("drive-picker");
@@ -59,7 +49,6 @@ function GoogleDocsPicker({ clientUser, userSetter, renderPicker, setRenderPicke
             <DrivePickerDocsView mime-types="application/vnd.google-apps.document" mode="DocsViewMode.LIST" select-folder-enabled="false" view-id="DOCUMENTS" />
         </DrivePicker>
     </>);
-
 }
 
 export default GoogleDocsPicker;

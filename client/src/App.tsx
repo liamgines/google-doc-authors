@@ -84,7 +84,7 @@ function App() {
     const [renderPicker, setRenderPicker] = useState(false);
     return (<>
         <GoogleAuthorization user={user} setUser={setUser} setRenderPicker={setRenderPicker} setRevisions={setRevisions} />
-        <GoogleDocsPicker clientUser={user} userSetter={setUser} renderPicker={renderPicker} setRenderPicker={setRenderPicker} revisionsSetter={setRevisions} />
+        <GoogleDocsPicker user={user} setUser={setUser} renderPicker={renderPicker} setRenderPicker={setRenderPicker} setRevisions={setRevisions} />
         <QuotesDisplay user={user} revisions={revisions} />
     </>);
 }
