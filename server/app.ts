@@ -89,28 +89,6 @@ async function googleVerifySignIn(token: string): Promise<string | null> {
     }
 }
 
-app.post("/api/auth/google-sign-in", async (request: Request, response: Response, next: NextFunction) => {
-    const userSignInToken: string = request.body.token;
-    const googleAccountId: string | null = await googleVerifySignIn(userSignInToken);
-
-    if (!googleAccountId) return response.status(500).json({ message: "Google sign in failed" });
-
-    const user = await usersTable.createUserIfNotExists(googleAccountId);
-    if (!user) return response.status(500).json({ message: "Google sign in failed or account could not be created" });
-
-    // Now that we've confirmed that there's an account in the database, create "a logged-in user session" (https://developers.google.com/identity/gsi/web/guides/verify-google-id-token#post).
-    function serverOnSessionSave(error: any) {
-        if (error) return next(error);
-        return response.json(userToClientUser(user));
-    }
-    function serverOnSessionRegenerate(error: any) {
-        if (error) return next(error);
-        (request.session as UserSession).user = user;
-        return request.session.save(serverOnSessionSave);
-    }
-    return request.session.regenerate(serverOnSessionRegenerate);
-});
-
 app.get("/api/auth/google-logout", async (request: Request, response: Response, next: NextFunction) => {
     (request.session as UserSession).user = null;
 
@@ -129,20 +107,6 @@ app.get("/api/auth/google-logout", async (request: Request, response: Response, 
 app.get("/api/authorize/logout", async (request: Request, response: Response) => {
     (request.session as UserSession).userTokens = undefined;
     return response.redirect("/api/auth/google-logout");
-});
-
-function requestIsFromGoogleUser(request: Request, response: Response, next: NextFunction) {
-    if ((request.session as UserSession).user) return next();
-    return next("route");
-}
-
-app.get("/api/auth/signed-in-google-user", requestIsFromGoogleUser, async (request: Request, response: Response) => {
-    const user: User | null | undefined = (request.session as UserSession).user;
-    return response.json(userToClientUser(user));
-});
-
-app.get("/api/auth/signed-in-google-user", async (request: Request, response: Response) => {
-    return response.json(null);
 });
 
 function requestIsAuthorizedWithGoogle(request: Request, response: Response, next: NextFunction) {
