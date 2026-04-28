@@ -370,6 +370,7 @@ interface RevisionChar {
     char: string
 }
 
+const ORIGINAL_DOC_PERMISSION_ID = "ORIGINAL_DOC";
 function revisionCharMake(permissionId: string | undefined, char: string): RevisionChar {
     return { permissionId: permissionId || "", char: char };
 }
@@ -388,7 +389,7 @@ function revisionUserTextsToChars(users: Array<RevisionUser>, texts: Array<strin
      * We could attribute these characters to the author who made the document copy (i.e. the first user), but for now, we'll just attribute these initial characters to an empty id instead.
      */
     const firstText = texts[0];
-    for (let i = 0; i < firstText.length; i++) revisionChars[i] = revisionCharMake("", firstText[i]);
+    for (let i = 0; i < firstText.length; i++) revisionChars[i] = revisionCharMake(ORIGINAL_DOC_PERMISSION_ID, firstText[i]); // Adjusted to give credit to original document
 
     const numTexts = texts.length;
     for (let i = 0; i < numTexts - 1; i++) {
@@ -444,6 +445,8 @@ function revisionCharsToQuotes(revisionChars: Array<RevisionChar>): Array<Quote>
 
 function revisionUsersByPermissionId(revisionUsers: Array<RevisionUser>): any {
     let permissionIdUsers: any = {};
+    // Add a placeholder user for the original document (for when the document is a copy of another document)
+    permissionIdUsers[ORIGINAL_DOC_PERMISSION_ID] = { displayName: "Original Document", emailAddress: "" };
     // Ensure there is always a placeholder user with no id
     permissionIdUsers[""] = { displayName: "Anonymous", emailAddress: "N/A" };
     for (let user of revisionUsers) {
