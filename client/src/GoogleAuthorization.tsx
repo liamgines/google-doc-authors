@@ -11,7 +11,7 @@ function scriptMake(url: string, async: boolean, defer: boolean, onLoad: () => v
     return script;
 }
 
-function GoogleAuthorization({ user, setUser, setRenderPicker, setRevisions }) {
+function GoogleAuthorization({ user, setUser, setRenderPicker, setGoogleDoc }) {
     const [googleAuthorizationCodeClient, setGoogleAuthorizationCodeClient] = useState(null);
 
     async function documentOnUserAuthorization(googleResponse) {
@@ -45,7 +45,7 @@ function GoogleAuthorization({ user, setUser, setRenderPicker, setRevisions }) {
 
         setUser(null);
         setRenderPicker(false);
-        setRevisions(null);
+        setGoogleDoc(null);
     }
 
     useEffect(() => {

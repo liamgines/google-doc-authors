@@ -47,11 +47,11 @@ function UserColorKey({ permissionIdUsers, permissionIdColors }) {
     return (<ul style={{ listStyleType: "square" }}>{userColorKey}</ul>);
 }
 
-function GoogleDocQuotes({ user, revisions }) {
-    if (!user || !revisions) return (<></>);
+function GoogleDocQuotes({ user, googleDoc }) {
+    if (!user || !googleDoc) return (<></>);
 
-    const quotes = revisions.quotes;
-    const permissionIdUsers = revisions.permissionIdUsers;
+    const quotes = googleDoc.quotes;
+    const permissionIdUsers = googleDoc.permissionIdUsers;
 
     const permissionIdColors: any = permissionIdUsersToColorMap(permissionIdUsers);
 

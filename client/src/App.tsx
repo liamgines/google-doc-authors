@@ -7,12 +7,12 @@ const clientUser = await (await fetch("/api/authorize/user-with-google-drive-acc
 
 function App() {
     const [user, setUser] = useState(clientUser);
-    const [revisions, setRevisions] = useState(null);
+    const [googleDoc, setGoogleDoc] = useState(null);
     const [renderPicker, setRenderPicker] = useState(false);
     return (<>
-        <GoogleAuthorization user={user} setUser={setUser} setRenderPicker={setRenderPicker} setRevisions={setRevisions} />
-        <GoogleDocsPicker user={user} setUser={setUser} renderPicker={renderPicker} setRenderPicker={setRenderPicker} setRevisions={setRevisions} />
-        <GoogleDocQuotes user={user} revisions={revisions} />
+        <GoogleAuthorization user={user} setUser={setUser} setRenderPicker={setRenderPicker} setGoogleDoc={setGoogleDoc} />
+        <GoogleDocsPicker user={user} setUser={setUser} renderPicker={renderPicker} setRenderPicker={setRenderPicker} setGoogleDoc={setGoogleDoc} />
+        <GoogleDocQuotes user={user} googleDoc={googleDoc} />
     </>);
 }
 
