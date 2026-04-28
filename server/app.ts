@@ -89,7 +89,7 @@ async function googleVerifySignIn(token: string): Promise<string | null> {
     }
 }
 
-app.get("/api/auth/google-logout", async (request: Request, response: Response, next: NextFunction) => {
+app.get("/api/authenticate/google-logout", async (request: Request, response: Response, next: NextFunction) => {
     (request.session as UserSession).user = null;
 
     function serverOnSessionRegenerate(error: any) {
@@ -106,7 +106,7 @@ app.get("/api/auth/google-logout", async (request: Request, response: Response, 
 
 app.get("/api/authorize/logout", async (request: Request, response: Response) => {
     (request.session as UserSession).userTokens = undefined;
-    return response.redirect("/api/auth/google-logout");
+    return response.redirect("/api/authenticate/google-logout");
 });
 
 function requestIsAuthorizedWithGoogle(request: Request, response: Response, next: NextFunction) {
