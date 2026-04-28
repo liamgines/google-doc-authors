@@ -66,14 +66,13 @@ const sessionStore = new connectPgSession({ pool: pool });
 // https://stackoverflow.com/a/73207170/32242805
 app.use(session({ secret: process.env.EXPRESS_SESSION_SECRET as string, resave: false, saveUninitialized: true, cookie: { maxAge: MILLISECONDS_PER_SESSION }, store: sessionStore }));
 
-const authenticationClient = new OAuth2Client();
 // https://blog.maffin.io/posts/client-side-google-authorization-code-model
 const authorizationClientOptions = { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, redirectUri: "postmessage" };
 const authorizationClient = new OAuth2Client(authorizationClientOptions);
 
 async function googleVerifySignIn(token: string): Promise<string | null> {
     try {
-        const ticket = await authenticationClient.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID });
+        const ticket = await authorizationClient.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID });
         const payload: TokenPayload | undefined = ticket.getPayload();
 
         if (!payload) return null; 
