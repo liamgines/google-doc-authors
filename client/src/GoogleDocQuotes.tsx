@@ -51,8 +51,8 @@ function UserColorKey({ permissionIdUsers, permissionIdColors }) {
     return (<ul style={{ listStyleType: "square" }}>{userColorKey}</ul>);
 }
 
-function GoogleDocQuotes({ user, googleDoc }) {
-    if (!user || !googleDoc) return (<></>);
+function GoogleDocQuotes({ googleDoc }) {
+    if (!googleDoc) return (<></>);
 
     const quotes = googleDoc.quotes;
     const permissionIdUsers = googleDoc.permissionIdUsers;

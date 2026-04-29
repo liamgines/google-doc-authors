@@ -4,7 +4,9 @@ import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-
 // https://developers.google.com/workspace/drive/picker/guides/overview
 // https://github.com/googleworkspace/drive-picker-element/tree/main/packages/drive-picker-element#event-details
 
-function GoogleDocsPicker({ user, setUser, renderPicker, setRenderPicker, setGoogleDoc }) {
+function GoogleDocsPicker({ user, setUser, setGoogleDoc }) {
+    const [renderPicker, setRenderPicker] = useState(false);
+
     async function userRequestDocAnalysis(event) {
         try {
             const docs = event.detail.docs;
@@ -40,7 +42,6 @@ function GoogleDocsPicker({ user, setUser, renderPicker, setRenderPicker, setGoo
         if (picker) picker.visible = true;
     }
 
-    if (!user) return (<></>);
     if (!renderPicker) return (<button onClick={async () => { await pick(); setRenderPicker(true); }}>Select Document</button>);
     return (<>
         <button onClick={pick}>Select Document</button>

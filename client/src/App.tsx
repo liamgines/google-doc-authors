@@ -1,19 +1,38 @@
 import { useState } from "react";
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router";
 import GoogleAuthorization from "./GoogleAuthorization";
-import GoogleDocsPicker from "./GoogleDocsPicker";
-import GoogleDocQuotes from "./GoogleDocQuotes";
+import GoogleLogout from "./GoogleLogout";
+import GoogleDocsList from "./GoogleDocsList";
 
 const clientUser = await (await fetch("/api/authorize/user-with-google-drive-access")).json();
 
+function VisitorOnlyRoute({ user }) {
+    const visitor = !user;
+    if (visitor) return <Outlet />;
+    return (<Navigate to="/" replace />);
+}
+
+function UserOnlyRoute({ user, setUser }) {
+    if (user) return (<><GoogleLogout setUser={setUser} /><Outlet /></>);
+    return (<Navigate to="/login" replace />);
+}
+
 function App() {
     const [user, setUser] = useState(clientUser);
-    const [googleDoc, setGoogleDoc] = useState(null);
-    const [renderPicker, setRenderPicker] = useState(false);
-    return (<>
-        <GoogleAuthorization user={user} setUser={setUser} setRenderPicker={setRenderPicker} setGoogleDoc={setGoogleDoc} />
-        <GoogleDocsPicker user={user} setUser={setUser} renderPicker={renderPicker} setRenderPicker={setRenderPicker} setGoogleDoc={setGoogleDoc} />
-        <GoogleDocQuotes user={user} googleDoc={googleDoc} />
-    </>);
+
+    return (
+        <BrowserRouter>
+        <Routes>
+           <Route element={<VisitorOnlyRoute user={user} />}>
+               <Route path="/login" element={<GoogleAuthorization setUser={setUser} />} />
+           </Route>
+
+           <Route element={<UserOnlyRoute user={user} setUser={setUser} />}>
+                <Route index element={<GoogleDocsList user={user} setUser={setUser} />} />
+           </Route>
+        </Routes>
+        </BrowserRouter>
+    );
 }
 
 export default App;
