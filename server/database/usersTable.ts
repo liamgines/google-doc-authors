@@ -8,8 +8,7 @@ export async function getUserByGoogleAccountId(googleAccountId: string) {
 export async function createUser(googleAccountId: string): Promise<any> {
     try {
         // https://stackoverflow.com/q/34966841/32242805
-        return await pool.query(`INSERT INTO users (google_account_id)
-                                 VALUES ($1) RETURNING *;`, [googleAccountId]);
+        return await databaseQueryOnlyRow(pool, `INSERT INTO users (google_account_id) VALUES ($1) RETURNING *;`, [googleAccountId]);
     }
     catch (error) {
         console.error(error);
