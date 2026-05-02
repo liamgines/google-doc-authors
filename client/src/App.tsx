@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router";
 import GoogleAuthorization from "./GoogleAuthorization";
 import GoogleLogout from "./GoogleLogout";
 import GoogleDocsList from "./GoogleDocsList";
+import GoogleDocQuotes from "./GoogleDocQuotes";
 
 const clientUser = await (await fetch("/api/authorize/user-with-google-drive-access")).json();
 
@@ -29,6 +30,7 @@ function App() {
 
            <Route element={<UserOnlyRoute user={user} setUser={setUser} />}>
                 <Route index element={<GoogleDocsList user={user} setUser={setUser} />} />
+                <Route path="/docId/:id" element={<GoogleDocQuotes />} />
            </Route>
         </Routes>
         </BrowserRouter>

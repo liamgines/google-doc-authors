@@ -6,9 +6,16 @@ import session, { type Session } from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pool from "./database/pool";
 import * as usersTable from "./database/usersTable";
+import * as docsTable from "./database/docsTable";
+import * as userDocsTable from "./database/userDocsTable";
 import { diffChars } from "diff";
+import fs from "node:fs";
+import path from "node:path";
 
 const STATUS_TOO_MANY_REQUESTS = 429;
+const STATUS_NOT_FOUND = 404;
+const STATUS_FAILED_DEPENDENCY = 424;
+const STATUS_SERVICE_UNAVAILABLE = 503;
 
 function secondsToMilliseconds(seconds: number) {
     const MILLISECONDS_PER_SECOND = 1000;
@@ -428,8 +435,21 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const accessToken: string = tokens.access_token || "";
 
     const revisions = await docRevisions(docId, accessToken);
+    if (!revisions.length) return next();
+
+    const doc = await docsTable.createDocIfNotExists(docId);
+    if (!doc) return next();
+
+    const numRevisions = revisions.length;
+    const newestRevision = revisions[numRevisions - 1];
+    const user = userSession.user as User;
+    const userdoc = await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, "");
+    if (!userdoc) return next();
+
+    response.json(doc);
+
     const revisionTexts: Array<string> = await docRevisionTexts(docId, revisions, accessToken);
-    if (!revisionTexts.length) return next();
+    if (!revisionTexts.length) return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, null);
 
     const revisionUsers = revisionsToUsers(revisions);
 
@@ -440,7 +460,30 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const permissionIdUsers = revisionUsersByPermissionId(revisionUsers);
 
     const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers };
+    const googleDocPath = path.join(__dirname, "user_docs", `${user.google_account_id}-${doc.google_id}.json`);
+    fs.writeFileSync(googleDocPath, JSON.stringify(googleDoc));
+    return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, googleDocPath);
+});
+
+app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
+    const docId = request.params.id as string;
+    const userSession = request.session as UserSession;
+    const user = userSession.user as User;
+
+    const userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, docId);
+    if (!userdoc) return response.status(STATUS_NOT_FOUND).json({ message: "Specified document could not be found." });
+    else if (userdoc.path === null) return response.status(STATUS_FAILED_DEPENDENCY).json({ message: "Revisions could not be retrieved during this doc's last analysis. Try to resubmit the doc for analysis." });
+    else if (!userdoc.path.length) return response.status(STATUS_SERVICE_UNAVAILABLE).json({ message: "This doc is currently being analyzed, please check back later." });
+
+    const googleDoc = JSON.parse(fs.readFileSync(userdoc.path, { encoding: "utf-8", flag: "r" }));
     return response.json(googleDoc);
+});
+
+app.get("/api/docIds", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
+    const userSession = request.session as UserSession;
+    const user = userSession.user as User;
+    const docs = await docsTable.getAllDocsSubmittedByUser(user.id);
+    return response.json(docs);
 });
 
 app.listen(port, () => {

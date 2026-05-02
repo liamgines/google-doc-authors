@@ -4,7 +4,7 @@ import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-
 // https://developers.google.com/workspace/drive/picker/guides/overview
 // https://github.com/googleworkspace/drive-picker-element/tree/main/packages/drive-picker-element#event-details
 
-function GoogleDocsPicker({ user, setUser, setGoogleDoc }) {
+function GoogleDocsPicker({ user, setUser, setGoogleDocs }) {
     const [renderPicker, setRenderPicker] = useState(false);
 
     async function userRequestDocAnalysis(event) {
@@ -16,8 +16,8 @@ function GoogleDocsPicker({ user, setUser, setGoogleDoc }) {
                                                                                           body: new URLSearchParams({ docId: docId }) });
             if (!serverResponse.ok) return console.error("Document id could not be uploaded");
 
-            const googleDoc = await serverResponse.json();
-            if (setGoogleDoc) setGoogleDoc(googleDoc);
+            const serverGoogleDoc = await serverResponse.json();
+            setGoogleDocs(googleDocs => googleDocs.filter(googleDoc => googleDoc.google_id !== serverGoogleDoc.google_id).concat([serverGoogleDoc]));
         }
 
         catch (error) {

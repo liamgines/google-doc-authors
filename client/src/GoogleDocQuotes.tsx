@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { useParams } from "react-router";
 // https://sashamaps.net/docs/resources/20-colors/
 const HEX_COLORS = ["#E6194B", "#3CB44B", "#FFE119", "#4363D8", "#F58231", "#911EB4", "#42D4F4", "#F032E6", "#BFEF45", "#FABED4", "#469990", "#DCBEFF", "#9A6324", "#FFFAC8", "#800000", "#AAFFC3", "#808000", "#FFD8B1", "#000075"];
 const ANONYMOUS_HEX_COLOR = "#A9A9A9";
@@ -51,7 +53,19 @@ function UserColorKey({ permissionIdUsers, permissionIdColors }) {
     return (<ul style={{ listStyleType: "square" }}>{userColorKey}</ul>);
 }
 
-function GoogleDocQuotes({ googleDoc }) {
+function GoogleDocQuotes() {
+    const [googleDoc, setGoogleDoc] = useState(null);
+    const { id } = useParams();
+
+    async function fetchAndSetGoogleDoc() {
+        const serverResponse = await fetch(`/api/docId/${id}`);
+        if (!serverResponse.ok) return console.error("Error: Document could not be retrieved");
+        const googleDoc = await serverResponse.json();
+        return setGoogleDoc(googleDoc);
+    }
+
+    useEffect(() => { fetchAndSetGoogleDoc() }, []);
+
     if (!googleDoc) return (<></>);
 
     const quotes = googleDoc.quotes;
