@@ -485,6 +485,7 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
         const revisions: Array<Revision> = [placeholderRevision];
 
         const revisionTexts: Array<string> = await docRevisionTexts(docId, revisions, tokens.access_token as string);
+        if (!revisionTexts.length) return next();
 
         const revisionChars: Array<RevisionChar> = revisionUserTextsToChars(revisionUsers, revisionTexts);
 
