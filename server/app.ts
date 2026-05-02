@@ -260,7 +260,8 @@ async function fetchWithRetry(url: string, requestHeaders?: any, numRetries: num
 
         await sleepForMilliseconds(millisecondsTillRetry);
     }
-    throw new Error("Max retries exceeded");
+    console.error("Max retries exceeded");
+    return new Response(null, { status: STATUS_TOO_MANY_REQUESTS, statusText: "Too Many Requests" });
 }
 
 function revisionsFilterByConsecutiveUser(revisions: Array<Revision>): Array<Revision> {
@@ -362,6 +363,7 @@ function revisionUserTextsToChars(users: Array<RevisionUser>, texts: Array<strin
     const firstText = texts[0];
     for (let i = 0; i < firstText.length; i++) revisionChars[i] = revisionCharMake(ORIGINAL_DOC_PERMISSION_ID, firstText[i]); // Adjusted to give credit to original document
 
+    // TODO: Double check this line
     const numTexts = texts.length;
     for (let i = 0; i < numTexts - 1; i++) {
         let prev = texts[i];
@@ -483,6 +485,7 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
         const revisions: Array<Revision> = [placeholderRevision];
 
         const revisionTexts: Array<string> = await docRevisionTexts(docId, revisions, tokens.access_token as string);
+
         const revisionChars: Array<RevisionChar> = revisionUserTextsToChars(revisionUsers, revisionTexts);
 
         let quotes: Array<Quote> = revisionCharsToQuotes(revisionChars);
