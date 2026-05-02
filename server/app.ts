@@ -469,11 +469,32 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
     const docId = request.params.id as string;
     const userSession = request.session as UserSession;
     const user = userSession.user as User;
+    const tokens = userSession.userTokens as Credentials;
 
     const userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, docId);
     if (!userdoc) return response.status(STATUS_NOT_FOUND).json({ message: "Specified document could not be found." });
-    else if (userdoc.path === null) return response.status(STATUS_FAILED_DEPENDENCY).json({ message: "Revisions could not be retrieved during this doc's last analysis. Try to resubmit the doc for analysis." });
-    else if (!userdoc.path.length) return response.status(STATUS_SERVICE_UNAVAILABLE).json({ message: "This doc is currently being analyzed, please check back later." });
+    // !userdoc.path indicates null or ""
+    else if (!userdoc.path) {
+        // It doesn't matter who we credit this revision to, we attribute credit to an anonymous user when the quotes variable gets updated.
+        // We are returning text corresponding to the revision id currently in the database.
+        const placeholderUser = {} as RevisionUser;
+        const revisionUsers: Array<RevisionUser> = [placeholderUser];
+        const placeholderRevision = { id: userdoc.revision_id, lastModifyingUser: placeholderUser } as Revision;
+        const revisions: Array<Revision> = [placeholderRevision];
+
+        const revisionTexts: Array<string> = await docRevisionTexts(docId, revisions, tokens.access_token as string);
+        const revisionChars: Array<RevisionChar> = revisionUserTextsToChars(revisionUsers, revisionTexts);
+
+        let quotes: Array<Quote> = revisionCharsToQuotes(revisionChars);
+        // As of writing, credit is given to the original document by default, so we update this since we don't know what the final doc's contributions looks like yet.
+        quotes[0].permissionId = ANONYMOUS_PERMISSION_ID;
+        const permissionIdUsers = revisionUsersByPermissionId(revisionUsers);
+        const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers };
+
+        // Failed dependency indicates that the previous analysis request failed. Service unavailable indicates that the previous analysis request is still being processed.
+        const errorCode = (userdoc.path === null) ? STATUS_FAILED_DEPENDENCY : STATUS_SERVICE_UNAVAILABLE;
+        return response.status(errorCode).json(googleDoc);
+    }
 
     const googleDoc = JSON.parse(fs.readFileSync(userdoc.path, { encoding: "utf-8", flag: "r" }));
     return response.json(googleDoc);

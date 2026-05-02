@@ -4,6 +4,8 @@ import { useParams } from "react-router";
 const HEX_COLORS = ["#E6194B", "#3CB44B", "#FFE119", "#4363D8", "#F58231", "#911EB4", "#42D4F4", "#F032E6", "#BFEF45", "#FABED4", "#469990", "#DCBEFF", "#9A6324", "#FFFAC8", "#800000", "#AAFFC3", "#808000", "#FFD8B1", "#000075"];
 const ANONYMOUS_HEX_COLOR = "#A9A9A9";
 const ORIGINAL_DOC_HEX_COLOR = "#FFFFFF";
+const STATUS_FAILED_DEPENDENCY = 424;
+const STATUS_SERVICE_UNAVAILABLE = 503;
 
 // https://stackoverflow.com/a/47201559/32242805
 function hexToRGB(hex: string, alpha: string) {
@@ -59,7 +61,7 @@ function GoogleDocQuotes() {
 
     async function fetchAndSetGoogleDoc() {
         const serverResponse = await fetch(`/api/docId/${id}`);
-        if (!serverResponse.ok) return console.error("Error: Document could not be retrieved");
+        if (!serverResponse.ok && serverResponse.status !== STATUS_SERVICE_UNAVAILABLE && serverResponse.status !== STATUS_FAILED_DEPENDENCY) return console.error("Error: Document could not be retrieved");
         const googleDoc = await serverResponse.json();
         return setGoogleDoc(googleDoc);
     }
