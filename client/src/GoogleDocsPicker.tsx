@@ -11,6 +11,23 @@ export async function userRequestDocAnalysis(docId) {
     return serverGoogleDoc;
 }
 
+async function getNewAccessToken() {
+    const serverResponse = await fetch("/api/authorize/refresh-access-token");
+    if (!serverResponse.ok) return "";
+    const serverResponseJson = await serverResponse.json();
+    const newAccessToken = serverResponseJson.accessToken;
+    return newAccessToken;
+}
+
+export async function userRefreshAccessToken(setUser): boolean {
+    const newAccessToken = await getNewAccessToken();
+    if (!newAccessToken) return false;
+
+    // Need to wrap object in parentheses to return using a lambda (https://stackoverflow.com/a/28770578/32242805).
+    setUser(user => ({ id: user.id, accessToken: newAccessToken }));
+    return true;
+}
+
 function GoogleDocsPicker({ user, setUser, setGoogleDocs }) {
     const [renderPicker, setRenderPicker] = useState(false);
 
@@ -31,15 +48,7 @@ function GoogleDocsPicker({ user, setUser, setGoogleDocs }) {
         const picker = document.querySelector("drive-picker");
         if (!picker && renderPicker) return;
 
-        const serverResponse = await fetch("/api/authorize/refresh-access-token");
-        if (!serverResponse.ok) {
-            if (picker) picker.visible = true;
-            return;
-        }
-        const serverResponseJson = await serverResponse.json();
-        const newAccessToken = serverResponseJson.accessToken;
-        const userWithNewAccessToken = { id: user.id , accessToken: newAccessToken };
-        setUser(userWithNewAccessToken);
+        await userRefreshAccessToken(setUser);
 
         if (picker) picker.visible = true;
     }

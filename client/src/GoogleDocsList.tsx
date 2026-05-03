@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
-import GoogleDocsPicker, { userRequestDocAnalysis }  from "./GoogleDocsPicker";
+import GoogleDocsPicker, { userRefreshAccessToken, userRequestDocAnalysis }  from "./GoogleDocsPicker";
 
-function GoogleDocsTable({ googleDocs }) {
-    const rows = googleDocs.map(googleDoc => <tr key={googleDoc.google_id}><td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.google_id}</a></td><td><button onClick={async () => await userRequestDocAnalysis(googleDoc.google_id)}>Reanalyze</button></td></tr>);
+async function userRefreshAccessAndRequestAnalysis(setUser, docId) {
+    await userRefreshAccessToken(setUser);
+    await userRequestDocAnalysis(docId);
+}
+
+function GoogleDocsTable({ googleDocs, setUser }) {
+    const rows = googleDocs.map(googleDoc => <tr key={googleDoc.google_id}><td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.google_id}</a></td><td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id) }>Reanalyze</button></td></tr>);
     return (
         <table>
             <thead>
@@ -29,7 +34,7 @@ function GoogleDocsList({ user, setUser }) {
 
     return (<>
         <GoogleDocsPicker user={user} setUser={setUser} setGoogleDocs={setGoogleDocs} />
-        <GoogleDocsTable googleDocs={googleDocs} />
+        <GoogleDocsTable googleDocs={googleDocs} setUser={setUser} />
     </>);
 }
 
