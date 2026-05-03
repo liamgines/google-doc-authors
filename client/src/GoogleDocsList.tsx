@@ -1,17 +1,5 @@
 import { useState, useEffect } from "react";
-import GoogleDocsPicker from "./GoogleDocsPicker";
-
-async function userRequestDocAnalysis(docId) {
-    try {
-        const serverResponse = await fetch("/api/docId", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                                                                                      body: new URLSearchParams({ docId: docId }) });
-        if (!serverResponse.ok) return console.error("Document id could not be uploaded");
-    }
-
-    catch (error) {
-        console.error("Document id upload error:", error);
-    }
-}
+import GoogleDocsPicker, { userRequestDocAnalysis }  from "./GoogleDocsPicker";
 
 function GoogleDocsTable({ googleDocs }) {
     const rows = googleDocs.map(googleDoc => <tr key={googleDoc.google_id}><td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.google_id}</a></td><td><button onClick={async () => await userRequestDocAnalysis(googleDoc.google_id)}>Reanalyze</button></td></tr>);

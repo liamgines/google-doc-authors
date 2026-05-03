@@ -4,19 +4,21 @@ import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-
 // https://developers.google.com/workspace/drive/picker/guides/overview
 // https://github.com/googleworkspace/drive-picker-element/tree/main/packages/drive-picker-element#event-details
 
+export async function userRequestDocAnalysis(docId) {
+    const serverResponse = await fetch("/api/docId", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ docId: docId }) });
+    if (!serverResponse.ok) return console.error("Document id could not be uploaded");
+    const serverGoogleDoc = await serverResponse.json();
+    return serverGoogleDoc;
+}
+
 function GoogleDocsPicker({ user, setUser, setGoogleDocs }) {
     const [renderPicker, setRenderPicker] = useState(false);
 
-    async function userRequestDocAnalysis(event) {
+    async function listAddDoc(event) {
         try {
             const docs = event.detail.docs;
             const docId = docs[0].id;
-
-            const serverResponse = await fetch("/api/docId", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                                                                                          body: new URLSearchParams({ docId: docId }) });
-            if (!serverResponse.ok) return console.error("Document id could not be uploaded");
-
-            const serverGoogleDoc = await serverResponse.json();
+            const serverGoogleDoc = await userRequestDocAnalysis(docId);
             setGoogleDocs(googleDocs => googleDocs.filter(googleDoc => googleDoc.google_id !== serverGoogleDoc.google_id).concat([serverGoogleDoc]));
         }
 
@@ -46,7 +48,7 @@ function GoogleDocsPicker({ user, setUser, setGoogleDocs }) {
     return (<>
         <button onClick={pick}>Select Document</button>
         <DrivePicker client-id={import.meta.env.VITE_GOOGLE_CLIENT_ID} app-id={import.meta.env.VITE_GOOGLE_APP_ID} developer-key={import.meta.env.VITE_GOOGLE_PICKER_API_KEY} oauth-token={user.accessToken} 
-                     prompt="none" max-items={1} onPicked={userRequestDocAnalysis}>
+                     prompt="none" max-items={1} onPicked={listAddDoc}>
             <DrivePickerDocsView mime-types="application/vnd.google-apps.document" mode="DocsViewMode.LIST" select-folder-enabled="false" view-id="DOCUMENTS" />
         </DrivePicker>
     </>);
