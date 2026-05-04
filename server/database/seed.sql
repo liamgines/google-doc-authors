@@ -10,6 +10,15 @@ CREATE TABLE IF NOT EXISTS docs (
     CONSTRAINT uk_docs_google_id UNIQUE (google_id)
 );
 
+CREATE TABLE IF NOT EXISTS revisions (
+    id TEXT,
+    doc_id INTEGER,
+    path TEXT NOT NULL,
+    PRIMARY KEY (id, doc_id),
+    CONSTRAINT fk_revisions_docs FOREIGN KEY (doc_id) REFERENCES docs (id),
+    CONSTRAINT uk_revisions_path UNIQUE (path)
+);
+
 CREATE TABLE IF NOT EXISTS userdocs (
     user_id INTEGER,
     doc_id INTEGER,
