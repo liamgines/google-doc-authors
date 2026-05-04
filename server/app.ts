@@ -451,7 +451,13 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const numRevisions = revisions.length;
     const newestRevision = revisions[numRevisions - 1];
     const user = userSession.user as User;
-    const userdoc = await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, "");
+
+    // Check if the document is already being evaluated before updating and proceeding with the analysis
+    // If it's currently being evaluated, return an early response
+    let userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, doc.google_id);
+    if (userdoc && userdoc.path === "") return response.json(doc);
+
+    userdoc = await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, "");
     if (!userdoc) return next();
 
     response.json(doc);
