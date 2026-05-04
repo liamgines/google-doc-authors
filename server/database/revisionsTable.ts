@@ -20,8 +20,6 @@ export async function createRevision(docGoogleId: string, id: string, text: stri
     try {
         const doc = await getDocByGoogleId(docGoogleId);
         const revisionsPath = path.join(__dirname, "../doc_revisions");
-        if (!fs.existsSync(revisionsPath)) fs.mkdirSync(revisionsPath);
-
         const revisionPath = path.join(revisionsPath, `${docGoogleId}-${id}.txt`);
         fs.writeFileSync(revisionPath, text);
 
