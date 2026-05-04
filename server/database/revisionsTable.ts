@@ -32,3 +32,9 @@ export async function createRevision(docGoogleId: string, id: string, text: stri
         return null;
     }
 }
+
+export async function createRevisionIfNotExists(docGoogleId: string, id: string, text: string): Promise<any> {
+    let revision = await getRevisionByGoogleIds(docGoogleId, id);
+    if (!revision) revision = await createRevision(docGoogleId, id, text);
+    return revision;
+}

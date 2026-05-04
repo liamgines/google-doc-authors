@@ -330,7 +330,7 @@ async function docRevisionTexts(docId: string, revisions: Array<Revision>, acces
             if (!googleResponse.ok) return [];
 
             revisionText = await googleResponse.text();
-            let storedRevision = await revisionsTable.createRevision(docId, revision.id, revisionText);
+            let storedRevision = await revisionsTable.createRevisionIfNotExists(docId, revision.id, revisionText);
             if (!storedRevision) return [];
         }
         revisionTexts.push(revisionText);
