@@ -7,6 +7,7 @@ import connectPgSimple from "connect-pg-simple";
 import pool from "./database/pool";
 import * as usersTable from "./database/usersTable";
 import * as docsTable from "./database/docsTable";
+import * as revisionsTable from "./database/revisionsTable";
 import * as userDocsTable from "./database/userDocsTable";
 import { diffChars } from "diff";
 import fs from "node:fs";
@@ -320,13 +321,18 @@ async function docRevisionTexts(docId: string, revisions: Array<Revision>, acces
     let revisionTexts: Array<string> = [];
     const requestHeaders = { headers: { Authorization: `Bearer ${accessToken}` } };
     for (const revision of revisions) {
-        let exportUrl = `https://docs.google.com/feeds/download/documents/export/Export?id=${docId}&revision=${revision.id}&exportFormat=txt`;
-        // https://blog.postman.com/http-error-429/#preventing-429-errors
-        let googleResponse = await fetchSleep(exportUrl, requestHeaders);
-        if (googleResponse.status === STATUS_TOO_MANY_REQUESTS) googleResponse = await fetchWithRetry(exportUrl, requestHeaders);
-        if (!googleResponse.ok) return [];
+        let revisionText: string | null = await revisionsTable.getRevisionTextByGoogleIds(docId, revision.id);
+        if (revisionText === null) {
+            let exportUrl = `https://docs.google.com/feeds/download/documents/export/Export?id=${docId}&revision=${revision.id}&exportFormat=txt`;
+            // https://blog.postman.com/http-error-429/#preventing-429-errors
+            let googleResponse = await fetchSleep(exportUrl, requestHeaders);
+            if (googleResponse.status === STATUS_TOO_MANY_REQUESTS) googleResponse = await fetchWithRetry(exportUrl, requestHeaders);
+            if (!googleResponse.ok) return [];
 
-        let revisionText: string = await googleResponse.text();
+            revisionText = await googleResponse.text();
+            let storedRevision = await revisionsTable.createRevision(docId, revision.id, revisionText);
+            if (!storedRevision) return [];
+        }
         revisionTexts.push(revisionText);
     }
     return revisionTexts;
