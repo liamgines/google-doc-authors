@@ -9,9 +9,12 @@ async function seedDatabase() {
     await databaseQueryWithFile(pool, path.join(__dirname, "./reset.sql"));
 
     const userDocsPath = path.join(__dirname, "../user_docs");
+    const revisionsPath = path.join(__dirname, "../doc_revisions");
     // https://stackoverflow.com/a/26815894/32242805
     if (fs.existsSync(userDocsPath)) fs.rmSync(userDocsPath, { recursive: true, force: true });
     fs.mkdirSync(userDocsPath);
+    if (fs.existsSync(revisionsPath)) fs.rmSync(revisionsPath, { recursive: true, force: true });
+    fs.mkdirSync(revisionsPath);
 
     await databaseQueryWithFile(pool, path.join(__dirname,  "./seed.sql"));
     await databaseQueryWithFile(pool, path.join(__dirname, CREATE_SESSION_TABLE_SQL_FILE_PATH));
