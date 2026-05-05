@@ -36,6 +36,7 @@ function GoogleDocsPicker({ user, setUser, setGoogleDocs }) {
             const docs = event.detail.docs;
             const docId = docs[0].id;
             const serverGoogleDoc = await userRequestDocAnalysis(docId);
+            if (!serverGoogleDoc) return console.error("Error: Google doc revisions could not be retrieved.");
             setGoogleDocs(googleDocs => googleDocs.filter(googleDoc => googleDoc.google_id !== serverGoogleDoc.google_id).concat([serverGoogleDoc]));
         }
 
