@@ -146,8 +146,10 @@ app.post("/api/authorize/google-drive-access", async (request: Request, response
     const googleAccountId: string | null = await googleVerifySignIn(idToken);
     const scope: Array<string> = (tokens.scope) ? tokens.scope.split(" ") : [];
     const scopeIncludesDriveFiles = scope.includes("https://www.googleapis.com/auth/drive.file");
+    const scopeIncludesOpenId = scope.includes("openid");
+    const scopeIncludesEmail = scope.includes("https://www.googleapis.com/auth/userinfo.email");
 
-    if (!googleAccountId || !scopeIncludesDriveFiles) return response.status(500).json({ message: "Google authorization failed due to invalid id token or missing scope" });
+    if (!googleAccountId || !scopeIncludesDriveFiles || !scopeIncludesOpenId || !scopeIncludesEmail) return response.status(500).json({ message: "Google authorization failed due to invalid id token or missing scope" });
 
     const user = await usersTable.createUserIfNotExists(googleAccountId);
     if (!user) return response.status(500).json({ message: "Account could not be created or located" });
@@ -297,6 +299,7 @@ async function docRevisions(docId: string, accessToken: string): Promise<Array<R
 
     let revisionList: RevisionList = await googleResponse.json();
     revisions = revisions.concat(revisionList.revisions);
+
     revisions = revisionsFilterByConsecutiveUser(revisions);
 
     // TODO: Check that this loop works as intended

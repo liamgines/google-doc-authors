@@ -30,7 +30,7 @@ function GoogleAuthorization({ setUser }) {
     }
 
     function googleInitAuthorizationCodeClient() {
-        const clientOptions = { client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID, scope: "https://www.googleapis.com/auth/drive.file", ux_mode: "popup", callback: documentOnUserAuthorization };
+        const clientOptions = { client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID, scope: "https://www.googleapis.com/auth/drive.file openid https://www.googleapis.com/auth/userinfo.email", ux_mode: "popup", callback: documentOnUserAuthorization };
         const client = google.accounts.oauth2.initCodeClient(clientOptions);
         setGoogleAuthorizationCodeClient(client);
     }
