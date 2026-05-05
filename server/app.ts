@@ -268,7 +268,7 @@ async function fetchWithRetry(url: string, requestHeaders?: any, numRetries: num
 }
 
 function revisionsFilterByConsecutiveUser(revisions: Array<Revision>): Array<Revision> {
-    if (!revisions) return [];
+    if (!revisions.length) return [];
 
     let filteredRevisions = [revisions[0]];
 
