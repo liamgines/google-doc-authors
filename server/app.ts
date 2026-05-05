@@ -268,7 +268,8 @@ async function fetchWithRetry(url: string, requestHeaders?: any, numRetries: num
 }
 
 function revisionsFilterByConsecutiveUser(revisions: Array<Revision>): Array<Revision> {
-    // Should always be at least one initial revision, save it
+    if (!revisions) return [];
+
     let filteredRevisions = [revisions[0]];
 
     const numRevisions = revisions.length;
