@@ -45,8 +45,10 @@ function quotesToPermissionIdCharCounts(quotes: Array<any>) {
     let permissionIdCharCounts: any = {};
     for (const quote of quotes) {
         let permissionId = quote["permissionId"];
-        if (permissionId in permissionIdCharCounts) permissionIdCharCounts[permissionId] += quote.text.length;
-        else                                        permissionIdCharCounts[permissionId] = quote.text.length;
+        // https://stackoverflow.com/questions/10805125/how-to-remove-all-line-breaks-from-a-string#comment43300039_10805198
+        let textWithoutNewlines = quote.text.replace(/[\r\n]/g, "");
+        if (permissionId in permissionIdCharCounts) permissionIdCharCounts[permissionId] += textWithoutNewlines.length;
+        else                                        permissionIdCharCounts[permissionId] = textWithoutNewlines.length;
     }
     return permissionIdCharCounts;
 }
