@@ -41,14 +41,24 @@ function permissionIdUsersToColorMap(permissionIdUsers: any): any {
     return permissionIdColors;
 }
 
-function UserColorKey({ permissionIdUsers, permissionIdColors }) {
+function quotesToPermissionIdCharCounts(quotes: Array<any>) {
+    let permissionIdCharCounts: any = {};
+    for (const quote of quotes) {
+        let permissionId = quote["permissionId"];
+        if (permissionId in permissionIdCharCounts) permissionIdCharCounts[permissionId] += quote.text.length;
+        else                                        permissionIdCharCounts[permissionId] = quote.text.length;
+    }
+    return permissionIdCharCounts;
+}
+
+function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharCounts }) {
     let userColorKey = [];
     let i = 0;
     for (let permissionId in permissionIdUsers) {
         let user = permissionIdUsers[permissionId];
         let userColor = permissionIdColors[permissionId];
         let userColorItem = (<li key={i++} style={{ color: userColor }}>
-                             <span style={{ color: "black" }}>{user.displayName} {user.emailAddress ? `(${user.emailAddress})` : ""}</span>
+                             <span style={{ color: "black" }}>{user.displayName} {user.emailAddress ? `(${user.emailAddress})` : ""} | {(permissionId in permissionIdCharCounts) ? permissionIdCharCounts[permissionId] : 0} characters</span>
                              </li>);
         userColorKey.push(userColorItem);
     }
@@ -74,6 +84,7 @@ function GoogleDocQuotes() {
     const permissionIdUsers = googleDoc.permissionIdUsers;
 
     const permissionIdColors: any = permissionIdUsersToColorMap(permissionIdUsers);
+    const permissionIdCharCounts: any = quotesToPermissionIdCharCounts(quotes);
 
     let i = 0;
     const quoteSpans = quotes.map(quote => {
@@ -88,7 +99,7 @@ function GoogleDocQuotes() {
     });
     return (<>
         <p id="quotes">{quoteSpans}</p>
-        <UserColorKey permissionIdUsers={permissionIdUsers} permissionIdColors={permissionIdColors} />
+        <UserColorKey permissionIdUsers={permissionIdUsers} permissionIdColors={permissionIdColors} permissionIdCharCounts={permissionIdCharCounts} />
     </>);
 }
 
