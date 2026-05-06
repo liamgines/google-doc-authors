@@ -29,7 +29,7 @@ const SECONDS_PER_REQUEST = 60 / 12000;
 const MILLISECONDS_PER_REQUEST = secondsToMilliseconds(SECONDS_PER_REQUEST);
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PUBLIC_SERVER_PORT;
 
 app.use(cors());
 app.use(express.json());    // To parse application/json
@@ -72,15 +72,15 @@ const connectPgSession = connectPgSimple(session);
 const sessionStore = new connectPgSession({ pool: pool });
 
 // https://stackoverflow.com/a/73207170/32242805
-app.use(session({ secret: process.env.EXPRESS_SESSION_SECRET as string, resave: false, saveUninitialized: true, cookie: { maxAge: MILLISECONDS_PER_SESSION }, store: sessionStore }));
+app.use(session({ secret: process.env.PRIVATE_EXPRESS_SESSION_SECRET as string, resave: false, saveUninitialized: true, cookie: { maxAge: MILLISECONDS_PER_SESSION }, store: sessionStore }));
 
 // https://blog.maffin.io/posts/client-side-google-authorization-code-model
-const authorizationClientOptions = { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, redirectUri: "postmessage" };
+const authorizationClientOptions = { clientId: process.env.PUBLIC_GOOGLE_CLIENT_ID, clientSecret: process.env.PRIVATE_GOOGLE_CLIENT_SECRET, redirectUri: "postmessage" };
 const authorizationClient = new OAuth2Client(authorizationClientOptions);
 
 async function googleVerifySignIn(token: string): Promise<string | null> {
     try {
-        const ticket = await authorizationClient.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID });
+        const ticket = await authorizationClient.verifyIdToken({ idToken: token, audience: process.env.PUBLIC_GOOGLE_CLIENT_ID });
         const payload: TokenPayload | undefined = ticket.getPayload();
 
         if (!payload) return null; 

@@ -8,7 +8,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, envDirectory);
   return {
       envDir: envDirectory,
+      envPrefix: "PUBLIC_",
       plugins: [react()],
-      server: { proxy: { "/api": `http://localhost:${env.VITE_API_PORT}` } }
+      server: { proxy: { "/api": `http://localhost:${env.PUBLIC_SERVER_PORT}` } }
   }
 })
