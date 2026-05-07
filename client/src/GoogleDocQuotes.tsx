@@ -53,14 +53,39 @@ function quotesToPermissionIdCharCounts(quotes: Array<any>) {
     return permissionIdCharCounts;
 }
 
-function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharCounts }) {
+// https://stackoverflow.com/a/7343013
+function numberRoundToOneDecimalPlace(x: number) {
+    return Math.round(x * 10) / 10;
+}
+
+function fractionToPercent(numerator: number, denominator: number) {
+    return numberRoundToOneDecimalPlace((numerator / denominator) * 100);
+}
+
+function permissionIdCharCountsToPercentages(permissionIdCharCounts: any) {
+    let permissionIdCharPercentages = {};
+
+    let totalChars = 0;
+    for (const permissionId in permissionIdCharCounts) {
+        const userChars = permissionIdCharCounts[permissionId];
+        totalChars += userChars;
+    }
+
+    for (const permissionId in permissionIdCharCounts) {
+        const userChars = permissionIdCharCounts[permissionId];
+        permissionIdCharPercentages[permissionId] = fractionToPercent(userChars, totalChars);
+    }
+    return permissionIdCharPercentages;
+}
+
+function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharCounts, permissionIdCharPercentages }) {
     let userColorKey = [];
     let i = 0;
     for (let permissionId in permissionIdUsers) {
         let user = permissionIdUsers[permissionId];
         let userColor = permissionIdColors[permissionId];
         let userColorItem = (<li key={i++} style={{ color: userColor }}>
-                             <span style={{ color: "black" }}>{user.displayName} {user.emailAddress ? `(${user.emailAddress})` : ""} | {(permissionId in permissionIdCharCounts) ? permissionIdCharCounts[permissionId] : 0} characters</span>
+                             <span style={{ color: "black" }}>{user.displayName} {user.emailAddress ? `(${user.emailAddress})` : ""} | {(permissionId in permissionIdCharCounts) ? permissionIdCharCounts[permissionId] : 0} characters | {(permissionId in permissionIdCharPercentages) ? permissionIdCharPercentages[permissionId] : 0}% </span>
                              </li>);
         userColorKey.push(userColorItem);
     }
@@ -87,6 +112,7 @@ function GoogleDocQuotes() {
 
     const permissionIdColors: any = permissionIdUsersToColorMap(permissionIdUsers);
     const permissionIdCharCounts: any = quotesToPermissionIdCharCounts(quotes);
+    const permissionIdCharPercentages: any = permissionIdCharCountsToPercentages(permissionIdCharCounts);
 
     let i = 0;
     const quoteSpans = quotes.map(quote => {
@@ -101,7 +127,7 @@ function GoogleDocQuotes() {
     });
     return (<>
         <p id="quotes">{quoteSpans}</p>
-        <UserColorKey permissionIdUsers={permissionIdUsers} permissionIdColors={permissionIdColors} permissionIdCharCounts={permissionIdCharCounts} />
+        <UserColorKey permissionIdUsers={permissionIdUsers} permissionIdColors={permissionIdColors} permissionIdCharCounts={permissionIdCharCounts} permissionIdCharPercentages={permissionIdCharPercentages} />
     </>);
 }
 
