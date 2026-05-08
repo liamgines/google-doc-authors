@@ -527,6 +527,53 @@ app.get("/api/docIds", requestIsAuthorizedWithGoogle, async (request: Request, r
     return response.json(docs);
 });
 
+interface Author {
+    displayName: string,
+    emailAddress: string,
+    docGoogleIds: string[],
+    totalChars: number
+}
+
+function authorMake(name: string, email: string, docGoogleIds: string[], totalChars: number): Author {
+    return { displayName: name, emailAddress: email, docGoogleIds: docGoogleIds, totalChars: totalChars };
+}
+
+app.get("/api/authors", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
+    const userSession = request.session as UserSession;
+    const user = userSession.user as User;
+
+    let permissionIdAuthors: any = {};
+
+    const docs: Array<any> = await docsTable.getAllDocsSubmittedByUser(user.id);
+    for (const doc of docs) {
+        const userdoc = await userDocsTable.getUserDocByIds(user.id, doc.id);
+        // If the path is empty, it is either null or an empty string. This means the previous analysis failed or we are still processing the doc.
+        if (!userdoc || !userdoc.path) continue;
+
+        const googleDoc = JSON.parse(fs.readFileSync(userdoc.path, { encoding: "utf-8", flag: "r" }));
+        const quotes = googleDoc.quotes;
+        const permissionIdUsers = googleDoc.permissionIdUsers;
+
+        for (const permissionId in permissionIdUsers) {
+            const docUser = permissionIdUsers[permissionId];
+            if (permissionId in permissionIdAuthors) {
+                const author = permissionIdAuthors[permissionId];
+                permissionIdAuthors[permissionId] = authorMake(author.displayName, author.emailAddress || docUser.emailAddress, author.docGoogleIds.concat([doc.google_id]), author.totalChars);
+            }
+            else
+                permissionIdAuthors[permissionId] = authorMake(docUser.displayName, docUser.emailAddress, [doc.google_id], 0);
+        }
+
+        for (const quote of quotes) {
+            const permissionId = quote.permissionId;
+            const text = quote.text;
+            const textWithoutNewlines = text.replace(/[\r\n]/g, "");
+            permissionIdAuthors[permissionId].totalChars += textWithoutNewlines.length;
+        }
+    }
+    return response.json(permissionIdAuthors);
+});
+
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
 });
