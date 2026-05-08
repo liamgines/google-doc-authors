@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS docs (
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     google_id TEXT NOT NULL,
+    name TEXT NOT NULL,
     CONSTRAINT uk_docs_google_id UNIQUE (google_id)
 );
 
