@@ -476,6 +476,12 @@ function permissionIdCharCountsToPercentages(permissionIdCharCounts: any) {
     return permissionIdCharPercentages;
 }
 
+async function googleGetDocName(docId: string, accessToken: string): Promise<string> {
+    const googleResponse = await fetchSleep(`https://www.googleapis.com/drive/v3/files/${docId}?fields=name`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!googleResponse.ok) return "";
+    const doc = await googleResponse.json();
+    return doc.name as string;
+}
 
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
@@ -488,7 +494,8 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const revisions = await docRevisions(docId, accessToken);
     if (!revisions.length) return next();
 
-    const doc = await docsTable.createDocIfNotExists(docId);
+    const docName: string = await googleGetDocName(docId, accessToken);
+    const doc = await docsTable.createDocIfNotExistsOrUpdate(docId, docName || undefined);
     if (!doc) return next();
 
     const numRevisions = revisions.length;
