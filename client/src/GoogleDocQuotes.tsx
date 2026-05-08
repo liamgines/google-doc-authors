@@ -41,42 +41,6 @@ function permissionIdUsersToColorMap(permissionIdUsers: any): any {
     return permissionIdColors;
 }
 
-function quotesToPermissionIdCharCounts(quotes: Array<any>) {
-    let permissionIdCharCounts: any = {};
-    for (const quote of quotes) {
-        let permissionId = quote["permissionId"];
-        // https://stackoverflow.com/questions/10805125/how-to-remove-all-line-breaks-from-a-string#comment43300039_10805198
-        let textWithoutNewlines = quote.text.replace(/[\r\n]/g, "");
-        if (permissionId in permissionIdCharCounts) permissionIdCharCounts[permissionId] += textWithoutNewlines.length;
-        else                                        permissionIdCharCounts[permissionId] = textWithoutNewlines.length;
-    }
-    return permissionIdCharCounts;
-}
-
-// https://stackoverflow.com/a/7343013
-function numberRoundToOneDecimalPlace(x: number) {
-    return Math.round(x * 10) / 10;
-}
-
-function fractionToPercent(numerator: number, denominator: number) {
-    return numberRoundToOneDecimalPlace((numerator / denominator) * 100);
-}
-
-function permissionIdCharCountsToPercentages(permissionIdCharCounts: any) {
-    let permissionIdCharPercentages = {};
-
-    let totalChars = 0;
-    for (const permissionId in permissionIdCharCounts) {
-        const userChars = permissionIdCharCounts[permissionId];
-        totalChars += userChars;
-    }
-
-    for (const permissionId in permissionIdCharCounts) {
-        const userChars = permissionIdCharCounts[permissionId];
-        permissionIdCharPercentages[permissionId] = fractionToPercent(userChars, totalChars);
-    }
-    return permissionIdCharPercentages;
-}
 
 function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharCounts, permissionIdCharPercentages }) {
     let userColorKey = [];
@@ -111,8 +75,8 @@ function GoogleDocQuotes() {
     const permissionIdUsers = googleDoc.permissionIdUsers;
 
     const permissionIdColors: any = permissionIdUsersToColorMap(permissionIdUsers);
-    const permissionIdCharCounts: any = quotesToPermissionIdCharCounts(quotes);
-    const permissionIdCharPercentages: any = permissionIdCharCountsToPercentages(permissionIdCharCounts);
+    const permissionIdCharCounts: any = googleDoc.permissionIdCharCounts;
+    const permissionIdCharPercentages: any = googleDoc.permissionIdCharPercentages;
 
     let i = 0;
     const quoteSpans = quotes.map(quote => {

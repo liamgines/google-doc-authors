@@ -438,6 +438,44 @@ function revisionUsersByPermissionId(revisionUsers: Array<RevisionUser>): any {
     return permissionIdUsers;
 }
 
+function quotesToPermissionIdCharCounts(quotes: Array<any>) {
+    let permissionIdCharCounts: any = {};
+    for (const quote of quotes) {
+        let permissionId = quote["permissionId"];
+        // https://stackoverflow.com/questions/10805125/how-to-remove-all-line-breaks-from-a-string#comment43300039_10805198
+        let textWithoutNewlines = quote.text.replace(/[\r\n]/g, "");
+        if (permissionId in permissionIdCharCounts) permissionIdCharCounts[permissionId] += textWithoutNewlines.length;
+        else                                        permissionIdCharCounts[permissionId] = textWithoutNewlines.length;
+    }
+    return permissionIdCharCounts;
+}
+
+// https://stackoverflow.com/a/7343013
+function numberRoundToOneDecimalPlace(x: number) {
+    return Math.round(x * 10) / 10;
+}
+
+function fractionToPercent(numerator: number, denominator: number) {
+    return numberRoundToOneDecimalPlace((numerator / denominator) * 100);
+}
+
+function permissionIdCharCountsToPercentages(permissionIdCharCounts: any) {
+    let permissionIdCharPercentages = {};
+
+    let totalChars = 0;
+    for (const permissionId in permissionIdCharCounts) {
+        const userChars = permissionIdCharCounts[permissionId];
+        totalChars += userChars;
+    }
+
+    for (const permissionId in permissionIdCharCounts) {
+        const userChars = permissionIdCharCounts[permissionId];
+        permissionIdCharPercentages[permissionId] = fractionToPercent(userChars, totalChars);
+    }
+    return permissionIdCharPercentages;
+}
+
+
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
     const docId = request.body.docId;
@@ -477,7 +515,10 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     // @ts-ignore
     const permissionIdUsers = revisionUsersByPermissionId(revisionUsers);
 
-    const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers };
+    const permissionIdCharCounts = quotesToPermissionIdCharCounts(quotes);
+    const permissionIdCharPercentages = permissionIdCharCountsToPercentages(permissionIdCharCounts);
+
+    const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers, permissionIdCharCounts: permissionIdCharCounts, permissionIdCharPercentages: permissionIdCharPercentages };
     const googleDocPath = path.join(__dirname, "user_docs", `${user.google_account_id}-${doc.google_id}.json`);
     fs.writeFileSync(googleDocPath, JSON.stringify(googleDoc));
     return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, googleDocPath);
@@ -509,7 +550,11 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
         // As of writing, credit is given to the original document by default, so we update this since we don't know what the final doc's contributions looks like yet.
         quotes[0].permissionId = ANONYMOUS_PERMISSION_ID;
         const permissionIdUsers = revisionUsersByPermissionId(revisionUsers);
-        const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers };
+
+        const permissionIdCharCounts = quotesToPermissionIdCharCounts(quotes);
+        const permissionIdCharPercentages = permissionIdCharCountsToPercentages(permissionIdCharCounts);
+
+        const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers, permissionIdCharCounts: permissionIdCharCounts, permissionIdCharPercentages: permissionIdCharPercentages };
 
         // Failed dependency indicates that the previous analysis request failed. Service unavailable indicates that the previous analysis request is still being processed.
         const errorCode = (userdoc.path === null) ? STATUS_FAILED_DEPENDENCY : STATUS_SERVICE_UNAVAILABLE;
