@@ -4,7 +4,7 @@ function AuthorsList(permissionIdAuthors) {
     let paragraphs = [];
     for (const permissionId in permissionIdAuthors) {
         const author = permissionIdAuthors[permissionId];
-        paragraphs.push(<p>{author.displayName} {author.emailAddress ? `(${author.emailAddress})` : ""} | {author.totalChars} characters</p>);
+        paragraphs.push(<p>{author.displayName} {author.emailAddress ? `(${author.emailAddress})` : ""} | {author.totalChars} characters | {author.contributionPercentage}%</p>);
     }
     return paragraphs;
 }

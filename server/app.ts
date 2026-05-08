@@ -577,11 +577,12 @@ interface Author {
     displayName: string,
     emailAddress: string,
     docGoogleIds: string[],
-    totalChars: number
+    totalChars: number,
+    contributionPercentage: number
 }
 
-function authorMake(name: string, email: string, docGoogleIds: string[], totalChars: number): Author {
-    return { displayName: name, emailAddress: email, docGoogleIds: docGoogleIds, totalChars: totalChars };
+function authorMake(name: string, email: string, docGoogleIds: string[], totalChars: number, contributionPercentage: number = 0): Author {
+    return { displayName: name, emailAddress: email, docGoogleIds: docGoogleIds, totalChars: totalChars, contributionPercentage: contributionPercentage };
 }
 
 app.get("/api/authors", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
@@ -591,6 +592,7 @@ app.get("/api/authors", requestIsAuthorizedWithGoogle, async (request: Request, 
     let permissionIdAuthors: any = {};
 
     const docs: Array<any> = await docsTable.getAllDocsSubmittedByUser(user.id);
+    let allChars = 0;
     for (const doc of docs) {
         const userdoc = await userDocsTable.getUserDocByIds(user.id, doc.id);
         // If the path is empty, it is either null or an empty string. This means the previous analysis failed or we are still processing the doc.
@@ -613,8 +615,14 @@ app.get("/api/authors", requestIsAuthorizedWithGoogle, async (request: Request, 
         for (const permissionId in permissionIdCharCounts) {
             const charsAdded = permissionIdCharCounts[permissionId];
             permissionIdAuthors[permissionId].totalChars += charsAdded;
+            allChars += charsAdded;
         }
     }
+    for (const permissionId in permissionIdAuthors) {
+        const author = permissionIdAuthors[permissionId];
+        permissionIdAuthors[permissionId].contributionPercentage = fractionToPercent(author.totalChars, allChars);
+    }
+
     return response.json(permissionIdAuthors);
 });
 
