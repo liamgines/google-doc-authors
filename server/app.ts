@@ -597,7 +597,7 @@ app.get("/api/authors", requestIsAuthorizedWithGoogle, async (request: Request, 
         if (!userdoc || !userdoc.path) continue;
 
         const googleDoc = JSON.parse(fs.readFileSync(userdoc.path, { encoding: "utf-8", flag: "r" }));
-        const quotes = googleDoc.quotes;
+        const permissionIdCharCounts = googleDoc.permissionIdCharCounts;
         const permissionIdUsers = googleDoc.permissionIdUsers;
 
         for (const permissionId in permissionIdUsers) {
@@ -610,11 +610,9 @@ app.get("/api/authors", requestIsAuthorizedWithGoogle, async (request: Request, 
                 permissionIdAuthors[permissionId] = authorMake(docUser.displayName, docUser.emailAddress, [doc.google_id], 0);
         }
 
-        for (const quote of quotes) {
-            const permissionId = quote.permissionId;
-            const text = quote.text;
-            const textWithoutNewlines = text.replace(/[\r\n]/g, "");
-            permissionIdAuthors[permissionId].totalChars += textWithoutNewlines.length;
+        for (const permissionId in permissionIdCharCounts) {
+            const charsAdded = permissionIdCharCounts[permissionId];
+            permissionIdAuthors[permissionId].totalChars += charsAdded;
         }
     }
     return response.json(permissionIdAuthors);
