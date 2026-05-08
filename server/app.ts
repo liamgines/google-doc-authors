@@ -456,6 +456,7 @@ function numberRoundToOneDecimalPlace(x: number) {
 }
 
 function fractionToPercent(numerator: number, denominator: number) {
+    if (denominator === 0) return 0;
     return numberRoundToOneDecimalPlace((numerator / denominator) * 100);
 }
 
