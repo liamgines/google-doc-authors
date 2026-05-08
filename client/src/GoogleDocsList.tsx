@@ -7,11 +7,11 @@ async function userRefreshAccessAndRequestAnalysis(setUser, docId) {
 }
 
 function GoogleDocsTable({ googleDocs, setUser }) {
-    const rows = googleDocs.map(googleDoc => <tr key={googleDoc.google_id}><td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.google_id}</a></td><td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id) }>Reanalyze</button></td></tr>);
+    const rows = googleDocs.map(googleDoc => <tr key={googleDoc.google_id}><td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.name}</a></td><td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id) }>Reanalyze</button></td></tr>);
     return (
         <table>
             <thead>
-                <tr><th>Google Doc ID</th><th></th></tr>
+                <tr><th>Google Doc</th><th></th></tr>
             </thead>
 
             <tbody>
