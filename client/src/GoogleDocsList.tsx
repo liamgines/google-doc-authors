@@ -6,12 +6,30 @@ async function userRefreshAccessAndRequestAnalysis(setUser, docId) {
     await userRequestDocAnalysis(docId);
 }
 
+function dateToClientString(date: Date) {
+    const currentDate: Date = new Date();
+    const currentYear: string = currentDate.toLocaleString("default", { year: "numeric" });
+
+    const month: string = date.toLocaleString("default", { month: "short" });
+    const day: string = date.toLocaleString("default", { day: "numeric" });
+    const year: string = date.toLocaleString("default", { year: "numeric" });
+    return `${month} ${day}${(year === currentYear) ? "" : `, ${year}`}`;
+}
+
 function GoogleDocsTable({ googleDocs, setUser }) {
-    const rows = googleDocs.map(googleDoc => <tr key={googleDoc.google_id}><td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.name}</a></td><td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id) }>Reanalyze</button></td></tr>);
+    const rows = googleDocs.map(googleDoc => {
+        const modifiedDate: Date = new Date(googleDoc.modified_time);
+        return (<tr key={googleDoc.google_id}>
+                    <td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.name}</a></td>
+                    <td>{dateToClientString(modifiedDate)}</td>
+                    <td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id) }>Reanalyze</button></td>
+               </tr>);
+    });
+
     return (
         <table>
             <thead>
-                <tr><th>Google Doc</th><th></th></tr>
+                <tr><th>Google Doc</th><th>Date modified</th><th></th></tr>
             </thead>
 
             <tbody>
