@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS userdocs (
     user_id INTEGER,
     doc_id INTEGER,
     revision_id TEXT NOT NULL,
+    modified_time TIMESTAMPTZ NOT NULL,
     path TEXT,
     PRIMARY KEY (user_id, doc_id),
     CONSTRAINT fk_userdocs_users FOREIGN KEY (user_id) REFERENCES users (id),
