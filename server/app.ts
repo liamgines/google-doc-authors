@@ -292,7 +292,7 @@ function revisionUserEqual(a: RevisionUser, b: RevisionUser) {
 // https://stackoverflow.com/a/78737793/32242805
 // Defaults: "revisions/kind,revisions/id,revisions/mimeType,revisions/modifiedTime"
 async function docRevisions(docId: string, accessToken: string): Promise<Array<Revision>> {
-    const revisionFields = "revisions/id,revisions/lastModifyingUser";
+    const revisionFields = "revisions/id,revisions/lastModifyingUser,revisions/modifiedTime";
     let revisions: Array<Revision> = [];
 
     let googleResponse = await fetchSleep(`https://www.googleapis.com/drive/v3/files/${docId}/revisions?fields=${revisionFields}`, { headers: { Authorization: `Bearer ${accessToken}` } });
@@ -483,6 +483,17 @@ async function googleGetDocName(docId: string, accessToken: string): Promise<str
     return doc.name as string;
 }
 
+interface ClientDoc {
+    id: number,
+    google_id: string,
+    name: string,
+    modified_time: any
+}
+
+function clientDocMake(doc: any, userdoc: any): ClientDoc {
+    return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: userdoc.modified_time };
+}
+
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
     const docId = request.body.docId;
@@ -505,15 +516,15 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     // Check if the document is already being evaluated before updating and proceeding with the analysis
     // If it's currently being evaluated, return an early response
     let userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, doc.google_id);
-    if (userdoc && userdoc.path === "") return response.json(doc);
+    if (userdoc && userdoc.path === "") return response.json(clientDocMake(doc, userdoc));
 
-    userdoc = await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, "");
+    userdoc = await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, "");
     if (!userdoc) return next();
 
-    response.json(doc);
+    response.json(clientDocMake(doc, userdoc));
 
     const revisionTexts: Array<string> = await docRevisionTexts(docId, revisions, accessToken);
-    if (!revisionTexts.length) return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, null);
+    if (!revisionTexts.length) return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, null);
 
     const revisionUsers = revisionsToUsers(revisions);
 
@@ -529,7 +540,7 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers, permissionIdCharCounts: permissionIdCharCounts, permissionIdCharPercentages: permissionIdCharPercentages };
     const googleDocPath = path.join(__dirname, "user_docs", `${user.google_account_id}-${doc.google_id}.json`);
     fs.writeFileSync(googleDocPath, JSON.stringify(googleDoc));
-    return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, googleDocPath);
+    return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, googleDocPath);
 });
 
 app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
@@ -576,8 +587,8 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
 app.get("/api/docIds", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
     const userSession = request.session as UserSession;
     const user = userSession.user as User;
-    const docs = await docsTable.getAllDocsSubmittedByUser(user.id);
-    return response.json(docs);
+    const clientDocs = await userDocsTable.getAllSubmittedByUser(user.id);
+    return response.json(clientDocs);
 });
 
 interface Author {
