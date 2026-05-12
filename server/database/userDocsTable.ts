@@ -49,6 +49,10 @@ export async function getClientUserDocByIds(userId: number, docId: number): Prom
 }
 */
 
+// https://stackoverflow.com/a/38754674
 export async function getAllSubmittedByUser(userId: number): Promise<any> {
-    return await databaseQueryRows(pool, `SELECT docs.id, docs.google_id, docs.name, userdocs.modified_time FROM docs INNER JOIN userdocs ON docs.id = userdocs.doc_id AND userdocs.user_id = $1;`, [userId]);
+    return await databaseQueryRows(pool, `SELECT docs.id, docs.google_id, docs.name, userdocs.modified_time, row_to_json(authors) as last_modifying_user FROM docs
+                                          INNER JOIN userdocs ON docs.id = userdocs.doc_id AND userdocs.user_id = $1
+                                          INNER JOIN revisions ON userdocs.revision_id = revisions.id
+                                          INNER JOIN authors ON revisions.author_id = authors.id;`, [userId]);
 }

@@ -493,11 +493,14 @@ interface ClientDoc {
     id: number,
     google_id: string,
     name: string,
-    modified_time: any
+    modified_time: any,
+    last_modifying_user: any
 }
 
-function clientDocMake(doc: any, userdoc: any): ClientDoc {
-    return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: userdoc.modified_time };
+async function clientDocMake(doc: any, userdoc: any, lastModifyingUser: any): ClientDoc {
+    const permissionId = (lastModifyingUser && lastModifyingUser.permissionId) ? lastModifyingUser.permissionId : ANONYMOUS_PERMISSION_ID;
+    const lastModifyingUserToReturn = await authorsTable.getAuthorByPermissionId(permissionId);
+    return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: userdoc.modified_time, last_modifying_user: lastModifyingUserToReturn };
 }
 
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
@@ -529,12 +532,12 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     // Check if the document is already being evaluated before updating and proceeding with the analysis
     // If it's currently being evaluated, return an early response
     let userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, doc.google_id);
-    if (userdoc && userdoc.path === "") return response.json(clientDocMake(doc, userdoc));
+    if (userdoc && userdoc.path === "") return response.json(await clientDocMake(doc, userdoc, newestRevision.lastModifyingUser));
 
     userdoc = await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, "");
     if (!userdoc) return next();
 
-    response.json(clientDocMake(doc, userdoc));
+    response.json(await clientDocMake(doc, userdoc, newestRevision.lastModifyingUser));
 
     const revisionTexts: Array<string> = await docRevisionTexts(docId, revisions, accessToken);
     if (!revisionTexts.length) return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, null);
