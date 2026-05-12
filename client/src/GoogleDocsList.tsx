@@ -19,10 +19,11 @@ function dateToClientString(date: Date) {
 function GoogleDocsTable({ googleDocs, setUser }) {
     const rows = googleDocs.map(googleDoc => {
         const modifiedDate: Date = new Date(googleDoc.modified_time);
+        const user = googleDoc.last_modifying_user;
         return (<tr key={googleDoc.google_id}>
                     <td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.name}</a></td>
                     <td>{dateToClientString(modifiedDate)}</td>
-                    <td>{googleDoc.last_modifying_user.name}</td>
+                    <td>{user.photo_link && (<img src={user.photo_link} referrerPolicy="no-referrer" />)} {user.name}</td>
                     <td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id) }>Reanalyze</button></td>
                </tr>);
     });
