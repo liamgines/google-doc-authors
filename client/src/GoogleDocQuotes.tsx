@@ -89,8 +89,10 @@ function GoogleDocQuotes() {
         let userEmail = user.emailAddress;
 
         let userColor = permissionIdColors[permissionId];
+
+        const hoverText = (userEmail) ? `${userName} (${userEmail})` : userName;
         // For displaying whitespace properly: https://stackoverflow.com/a/69436906/32242805
-        return (<span key={i++} id={permissionId} style={{ backgroundColor: userColor, whiteSpace: "pre-line" }}>{quote.text}</span>);
+        return (<span key={i++} id={permissionId} title={hoverText} style={{ backgroundColor: userColor, whiteSpace: "pre-line" }}>{quote.text}</span>);
     });
     return (<>
         <p id="quotes">{quoteSpans}</p>
