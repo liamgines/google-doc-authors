@@ -9,6 +9,7 @@ import * as usersTable from "./database/usersTable";
 import * as docsTable from "./database/docsTable";
 import * as revisionsTable from "./database/revisionsTable";
 import * as userDocsTable from "./database/userDocsTable";
+import * as authorsTable from "./database/authorsTable";
 import { diffChars } from "diff";
 import fs from "node:fs";
 import path from "node:path";
@@ -334,7 +335,12 @@ async function docRevisionTexts(docId: string, revisions: Array<Revision>, acces
             if (!googleResponse.ok) return [];
 
             revisionText = await googleResponse.text();
-            let storedRevision = await revisionsTable.createRevisionIfNotExists(docId, revision.id, revisionText);
+
+            const user = revision.lastModifyingUser;
+            const permissionId = (user && user.permissionId) ? user.permissionId : ANONYMOUS_PERMISSION_ID;
+            const author = await authorsTable.getAuthorByPermissionId(permissionId);
+
+            let storedRevision = await revisionsTable.createRevisionIfNotExists(docId, revision.id, revisionText, author.id);
             if (!storedRevision) return [];
         }
         revisionTexts.push(revisionText);
@@ -513,6 +519,13 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const newestRevision = revisions[numRevisions - 1];
     const user = userSession.user as User;
 
+    const revisionUsers = revisionsToUsers(revisions);
+    for (const user of revisionUsers) {
+        const permissionId: string = (user && user.permissionId) ? user.permissionId : ANONYMOUS_PERMISSION_ID;
+        if (permissionId === ANONYMOUS_PERMISSION_ID) await authorsTable.createOrUpdateAuthor(permissionId, "Anonymous User", "");
+        else                                          await authorsTable.createOrUpdateAuthor(permissionId, user.displayName, user.emailAddress, user.photoLink);
+    }
+
     // Check if the document is already being evaluated before updating and proceeding with the analysis
     // If it's currently being evaluated, return an early response
     let userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, doc.google_id);
@@ -525,8 +538,6 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
 
     const revisionTexts: Array<string> = await docRevisionTexts(docId, revisions, accessToken);
     if (!revisionTexts.length) return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, null);
-
-    const revisionUsers = revisionsToUsers(revisions);
 
     // @ts-ignore
     const revisionChars: Array<RevisionChar> = revisionUserTextsToChars(revisionUsers, revisionTexts);

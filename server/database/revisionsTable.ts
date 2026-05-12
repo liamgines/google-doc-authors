@@ -16,14 +16,14 @@ export async function getRevisionTextByGoogleIds(docGoogleId: string, id: string
     return text;
 }
 
-export async function createRevision(docGoogleId: string, id: string, text: string): Promise<any> {
+export async function createRevision(docGoogleId: string, id: string, text: string, authorId: number): Promise<any> {
     try {
         const doc = await getDocByGoogleId(docGoogleId);
         const revisionsPath = path.join(__dirname, "../doc_revisions");
         const revisionPath = path.join(revisionsPath, `${docGoogleId}-${id}.txt`);
         fs.writeFileSync(revisionPath, text);
 
-        return await databaseQueryOnlyRow(pool, `INSERT INTO revisions (id, doc_id, path) VALUES ($1, $2, $3) RETURNING *;`, [id, doc.id, revisionPath]);
+        return await databaseQueryOnlyRow(pool, `INSERT INTO revisions (id, doc_id, path, author_id) VALUES ($1, $2, $3, $4) RETURNING *;`, [id, doc.id, revisionPath, authorId]);
     }
     catch (error) {
         console.error(error);
@@ -31,8 +31,8 @@ export async function createRevision(docGoogleId: string, id: string, text: stri
     }
 }
 
-export async function createRevisionIfNotExists(docGoogleId: string, id: string, text: string): Promise<any> {
+export async function createRevisionIfNotExists(docGoogleId: string, id: string, text: string, authorId: number): Promise<any> {
     let revision = await getRevisionByGoogleIds(docGoogleId, id);
-    if (!revision) revision = await createRevision(docGoogleId, id, text);
+    if (!revision) revision = await createRevision(docGoogleId, id, text, authorId);
     return revision;
 }
