@@ -11,12 +11,24 @@ CREATE TABLE IF NOT EXISTS docs (
     CONSTRAINT uk_docs_google_id UNIQUE (google_id)
 );
 
+CREATE TABLE IF NOT EXISTS authors (
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    permission_id TEXT NOT NULL,
+    name TEXT,
+    email TEXT,
+    photo_link TEXT,
+    CONSTRAINT uk_authors_permission_id UNIQUE (permission_id)
+);
+
+
 CREATE TABLE IF NOT EXISTS revisions (
     id TEXT,
     doc_id INTEGER,
+    author_id INTEGER NOT NULL,
     path TEXT NOT NULL,
     PRIMARY KEY (id, doc_id),
     CONSTRAINT fk_revisions_docs FOREIGN KEY (doc_id) REFERENCES docs (id),
+    CONSTRAINT fk_revisions_authors FOREIGN KEY (author_id) REFERENCES authors (id),
     CONSTRAINT uk_revisions_path UNIQUE (path)
 );
 
