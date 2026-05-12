@@ -22,6 +22,7 @@ function GoogleDocsTable({ googleDocs, setUser }) {
         return (<tr key={googleDoc.google_id}>
                     <td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.name}</a></td>
                     <td>{dateToClientString(modifiedDate)}</td>
+                    <td>{googleDoc.last_modifying_user.name}</td>
                     <td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id) }>Reanalyze</button></td>
                </tr>);
     });
@@ -29,7 +30,7 @@ function GoogleDocsTable({ googleDocs, setUser }) {
     return (
         <table>
             <thead>
-                <tr><th>Google Doc</th><th>Date modified</th><th></th></tr>
+                <tr><th>Google Doc</th><th>Date modified</th><th>Last modified by</th><th></th></tr>
             </thead>
 
             <tbody>
