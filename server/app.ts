@@ -503,6 +503,14 @@ async function clientDocMake(doc: any, userdoc: any, lastModifyingUser: any): Cl
     return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: userdoc.modified_time, last_modifying_user: lastModifyingUserToReturn };
 }
 
+async function createAuthorsFromRevisionUsers(revisionUsers: Array<RevisionUser>): Promise<void> {
+    for (const user of revisionUsers) {
+        const permissionId: string = (user && user.permissionId) ? user.permissionId : ANONYMOUS_PERMISSION_ID;
+        if (permissionId === ANONYMOUS_PERMISSION_ID) await authorsTable.createOrUpdateAuthor(permissionId, "Anonymous User", "");
+        else                                          await authorsTable.createOrUpdateAuthor(permissionId, user.displayName, user.emailAddress, user.photoLink);
+    }
+}
+
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
     const docId = request.body.docId;
@@ -523,11 +531,7 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const user = userSession.user as User;
 
     const revisionUsers = revisionsToUsers(revisions);
-    for (const user of revisionUsers) {
-        const permissionId: string = (user && user.permissionId) ? user.permissionId : ANONYMOUS_PERMISSION_ID;
-        if (permissionId === ANONYMOUS_PERMISSION_ID) await authorsTable.createOrUpdateAuthor(permissionId, "Anonymous User", "");
-        else                                          await authorsTable.createOrUpdateAuthor(permissionId, user.displayName, user.emailAddress, user.photoLink);
-    }
+    await createAuthorsFromRevisionUsers(revisionUsers);
 
     // Check if the document is already being evaluated before updating and proceeding with the analysis
     // If it's currently being evaluated, return an early response
@@ -574,6 +578,7 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
         // We are returning text corresponding to the revision id currently in the database.
         const placeholderUser = {} as RevisionUser;
         const revisionUsers: Array<RevisionUser> = [placeholderUser];
+        await createAuthorsFromRevisionUsers(revisionUsers);
         const placeholderRevision = { id: userdoc.revision_id, lastModifyingUser: placeholderUser } as Revision;
         const revisions: Array<Revision> = [placeholderRevision];
 
