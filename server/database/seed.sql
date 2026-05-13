@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS userdocs (
     revision_id TEXT NOT NULL,
     modified_time TIMESTAMPTZ NOT NULL,
     analysis_start_time TIMESTAMPTZ NOT NULL,
+    last_analysis_time TIMESTAMPTZ,
     path TEXT,
     PRIMARY KEY (user_id, doc_id),
     CONSTRAINT fk_userdocs_users FOREIGN KEY (user_id) REFERENCES users (id),

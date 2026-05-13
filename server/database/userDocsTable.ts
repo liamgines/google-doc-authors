@@ -47,9 +47,11 @@ export async function setNullPathAfterEnoughTimeSinceLastAnalysis(userId: number
 // NOTE: A path that is null indicates that the evaluation failed
 export async function updateRevisionIdTimeAndPath(userId: number, docId: number, revisionId: string, modifiedTime: string, path: string | null = null) {
     const startNewAnalysis = (path === "");
+    const analysisCompleted: boolean = (path !== null && path !== "");
     return await databaseQueryOnlyRow(pool, `UPDATE userdocs SET revision_id = $1, modified_time = $2, path = $3,
-                                             analysis_start_time = CASE WHEN $4 THEN NOW() ELSE analysis_start_time END
-                                             WHERE (user_id = $5 AND doc_id = $6) RETURNING *;`, [revisionId, modifiedTime, path, startNewAnalysis, userId, docId]);
+                                             analysis_start_time = CASE WHEN $4 THEN NOW() ELSE analysis_start_time END,
+                                             last_analysis_time = CASE WHEN $5 THEN NOW() ELSE last_analysis_time END
+                                             WHERE (user_id = $6 AND doc_id = $7) RETURNING *;`, [revisionId, modifiedTime, path, startNewAnalysis, analysisCompleted, userId, docId]);
 }
 
 // NOTE: A path that is not null and not empty indicates that the contribution evaluation succeeded
