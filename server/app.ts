@@ -532,7 +532,10 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     // Check if the document is already being evaluated before updating and proceeding with the analysis
     // If it's currently being evaluated, return an early response
     let userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, doc.google_id);
-    if (userdoc && userdoc.path === "") return response.json(await clientDocMake(doc, userdoc, newestRevision.lastModifyingUser));
+    if (userdoc && userdoc.path === "") {
+        userdoc = await userDocsTable.setNullPathAfterEnoughTimeSinceLastAnalysis(userdoc.user_id, userdoc.doc_id);
+        if (userdoc.path === "") return response.json(await clientDocMake(doc, userdoc, newestRevision.lastModifyingUser));
+    }
 
     userdoc = await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, "");
     if (!userdoc) return next();

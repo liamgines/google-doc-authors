@@ -17,7 +17,7 @@ export async function getUserDocByGoogleIds(userGoogleId: string, docGoogleId: s
 // NOTE: A path that is an empty string indicates that the contributions are in the process of being determined
 export async function createUserDoc(userId: number, docId: number, revisionId: string, modifiedTime: string, path: string = ""): Promise<any> {
     try {
-        return await databaseQueryOnlyRow(pool, `INSERT INTO userdocs (user_id, doc_id, revision_id, modified_time, path) VALUES ($1, $2, $3, $4, $5) RETURNING *;`, [userId, docId, revisionId, modifiedTime, path]);
+        return await databaseQueryOnlyRow(pool, `INSERT INTO userdocs (user_id, doc_id, revision_id, modified_time, path, analysis_start_time) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;`, [userId, docId, revisionId, modifiedTime, path]);
     }
     catch (error) {
         console.error(error);
@@ -25,9 +25,31 @@ export async function createUserDoc(userId: number, docId: number, revisionId: s
     }
 }
 
+function millisecondsToSeconds(milliseconds: number): number {
+    const MILLISECONDS_PER_SECOND = 1000;
+    const SECONDS_PER_MILLISECOND = 1 / MILLISECONDS_PER_SECOND;
+    return milliseconds * SECONDS_PER_MILLISECOND;
+}
+
+export async function setNullPathAfterEnoughTimeSinceLastAnalysis(userId: number, docId: number, secondsToWait: number = 150) {
+    const oldUserdoc = await getUserDocByIds(userId, docId);
+    const currentDate = new Date();
+    const analysisStartDate = new Date(oldUserdoc.analysis_start_time);
+    const millisecondsAnalyzed: number = currentDate - analysisStartDate;
+    const secondsAnalyzed: number = millisecondsToSeconds(millisecondsAnalyzed);
+
+    // This will allow a new analysis request to start if enough time has passed
+    const allowNullPath: boolean = (secondsAnalyzed >= secondsToWait);
+    const newPath: string = (allowNullPath ? null : oldUserdoc.path);
+    return await databaseQueryOnlyRow(pool, `UPDATE userdocs SET path = $1 WHERE (user_id = $2 AND doc_id = $3) RETURNING *;`, [newPath, userId, docId]);
+}
+
 // NOTE: A path that is null indicates that the evaluation failed
 export async function updateRevisionIdTimeAndPath(userId: number, docId: number, revisionId: string, modifiedTime: string, path: string | null = null) {
-    return await databaseQueryOnlyRow(pool, "UPDATE userdocs SET revision_id = $1, modified_time = $2, path = $3 WHERE (user_id = $4 AND doc_id = $5) RETURNING *;", [revisionId, modifiedTime, path, userId, docId]);
+    const startNewAnalysis = (path === "");
+    return await databaseQueryOnlyRow(pool, `UPDATE userdocs SET revision_id = $1, modified_time = $2, path = $3,
+                                             analysis_start_time = CASE WHEN $4 THEN NOW() ELSE analysis_start_time END
+                                             WHERE (user_id = $5 AND doc_id = $6) RETURNING *;`, [revisionId, modifiedTime, path, startNewAnalysis, userId, docId]);
 }
 
 // NOTE: A path that is not null and not empty indicates that the contribution evaluation succeeded
