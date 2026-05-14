@@ -80,3 +80,14 @@ export async function getAllSubmittedByUser(userId: number): Promise<any> {
                                           INNER JOIN revisions ON userdocs.revision_id = revisions.id
                                           INNER JOIN authors ON revisions.author_id = authors.id;`, [userId]);
 }
+
+export function getAnalysisStatus(userDocPath: string | null): string {
+    if (userDocPath === null) return "Failed";
+    if (!userDocPath.length) return "Processing";
+    return "Complete";
+}
+
+export async function getPath(userId: number, docId: number): Promise<string | null> {
+    const userdoc = await getUserDocByIds(userId, docId);
+    return userdoc.path;
+}

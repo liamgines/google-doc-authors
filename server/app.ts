@@ -500,7 +500,9 @@ interface ClientDoc {
 async function clientDocMake(doc: any, userdoc: any, lastModifyingUser: any): ClientDoc {
     const permissionId = (lastModifyingUser && lastModifyingUser.permissionId) ? lastModifyingUser.permissionId : ANONYMOUS_PERMISSION_ID;
     const lastModifyingUserToReturn = await authorsTable.getAuthorByPermissionId(permissionId);
-    return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: userdoc.modified_time, last_modifying_user: lastModifyingUserToReturn };
+    const path = await userDocsTable.getPath(userdoc.user_id, userdoc.doc_id);
+    const analysisStatus = userDocsTable.getAnalysisStatus(path);
+    return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: userdoc.modified_time, last_modifying_user: lastModifyingUserToReturn, analysis_status: analysisStatus };
 }
 
 async function createAuthorsFromRevisionUsers(revisionUsers: Array<RevisionUser>): Promise<void> {
@@ -610,7 +612,13 @@ app.get("/api/docIds", requestIsAuthorizedWithGoogle, async (request: Request, r
     const userSession = request.session as UserSession;
     const user = userSession.user as User;
     const clientDocs = await userDocsTable.getAllSubmittedByUser(user.id);
-    return response.json(clientDocs);
+    let clientDocsWithStatus = [];
+    for (const clientDoc of clientDocs) {
+        const path = await userDocsTable.getPath(user.id, clientDoc.id);
+        const analysisStatus = userDocsTable.getAnalysisStatus(path);
+        clientDocsWithStatus.push({...clientDoc, analysis_status: analysisStatus });
+    }
+    return response.json(clientDocsWithStatus);
 });
 
 interface Author {
