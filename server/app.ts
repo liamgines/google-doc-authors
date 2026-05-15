@@ -340,7 +340,7 @@ async function docRevisionTexts(docId: string, revisions: Array<Revision>, acces
             const permissionId = (user && user.permissionId) ? user.permissionId : ANONYMOUS_PERMISSION_ID;
             const author = await authorsTable.getAuthorByPermissionId(permissionId);
 
-            let storedRevision = await revisionsTable.createRevisionIfNotExists(docId, revision.id, revisionText, author.id);
+            let storedRevision = await revisionsTable.updateRevisionPathIfNull(docId, revision.id, revisionText);
             if (!storedRevision) return [];
         }
         revisionTexts.push(revisionText);
@@ -513,6 +513,16 @@ async function createAuthorsFromRevisionUsers(revisionUsers: Array<RevisionUser>
     }
 }
 
+async function createPlaceholderRevisions(docGoogleId: string, revisions: Array<Revision>): Promise<void> {
+    for (const revision of revisions) {
+        const user = revision.lastModifyingUser;
+        const permissionId = (user && user.permissionId) ? user.permissionId : ANONYMOUS_PERMISSION_ID;
+        const author = await authorsTable.getAuthorByPermissionId(permissionId);
+        // We haven't fetched the text when this is called
+        await revisionsTable.createRevisionIfNotExists(docGoogleId, revision.id, null, author.id);
+    }
+}
+
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
     const docId = request.body.docId;
@@ -534,6 +544,7 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
 
     const revisionUsers = revisionsToUsers(revisions);
     await createAuthorsFromRevisionUsers(revisionUsers);
+    await createPlaceholderRevisions(docId, revisions);
 
     // Check if the document is already being evaluated before updating and proceeding with the analysis
     // If it's currently being evaluated, return an early response

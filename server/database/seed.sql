@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS revisions (
     id TEXT,
     doc_id INTEGER,
     author_id INTEGER NOT NULL,
-    path TEXT NOT NULL,
+    path TEXT,
     PRIMARY KEY (id, doc_id),
     CONSTRAINT fk_revisions_docs FOREIGN KEY (doc_id) REFERENCES docs (id),
     CONSTRAINT fk_revisions_authors FOREIGN KEY (author_id) REFERENCES authors (id),
@@ -42,5 +42,8 @@ CREATE TABLE IF NOT EXISTS userdocs (
     path TEXT,
     PRIMARY KEY (user_id, doc_id),
     CONSTRAINT fk_userdocs_users FOREIGN KEY (user_id) REFERENCES users (id),
-    CONSTRAINT fk_userdocs_docs FOREIGN KEY (doc_id) REFERENCES docs (id)
+    CONSTRAINT fk_userdocs_docs FOREIGN KEY (doc_id) REFERENCES docs (id),
+    CONSTRAINT fk_userdocs_revisions FOREIGN KEY (doc_id, revision_id) REFERENCES revisions (doc_id, id)
 );
+
+-- CONSTRAINT uk_userdocs_path UNIQUE (path)
