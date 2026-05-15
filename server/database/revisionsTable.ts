@@ -16,15 +16,18 @@ export async function getRevisionTextByGoogleIds(docGoogleId: string, id: string
     return text;
 }
 
+function saveRevisionTextToFile(docGoogleId: string, id: string, text: string): string {
+    const revisionsPath = path.join(__dirname, "../doc_revisions");
+    const revisionPath = path.join(revisionsPath, `${docGoogleId}-${id}.txt`);
+    fs.writeFileSync(revisionPath, text);
+    return revisionPath;
+}
+
 export async function createRevision(docGoogleId: string, id: string, text: string | null, authorId: number): Promise<any> {
     try {
         const doc = await getDocByGoogleId(docGoogleId);
         let revisionPath: string | null = null;
-        if (text !== null) {
-            const revisionsPath = path.join(__dirname, "../doc_revisions");
-            revisionPath = path.join(revisionsPath, `${docGoogleId}-${id}.txt`);
-            fs.writeFileSync(revisionPath, text);
-        }
+        if (text !== null) revisionPath = saveRevisionTextToFile(docGoogleId, id, text);
         return await databaseQueryOnlyRow(pool, `INSERT INTO revisions (id, doc_id, path, author_id) VALUES ($1, $2, $3, $4) RETURNING *;`, [id, doc.id, revisionPath, authorId]);
     }
     catch (error) {
@@ -42,9 +45,7 @@ export async function createRevisionIfNotExists(docGoogleId: string, id: string,
 export async function updateRevisionPathIfNull(docGoogleId: string, id: string, text: string | null) {
     let revision = await getRevisionByGoogleIds(docGoogleId, id);
     if (!revision.path) {
-        const revisionsPath = path.join(__dirname, "../doc_revisions");
-        const revisionPath = path.join(revisionsPath, `${docGoogleId}-${id}.txt`);
-        fs.writeFileSync(revisionPath, text);
+        const revisionPath = saveRevisionTextToFile(docGoogleId, id, text);
         // Need to be careful here, getRevisionByGoogleIds joins revisions with the docs table. This means revision.id is not going to be the revision id... So use the id passed in to this function instead.
         revision = await databaseQueryOnlyRow(pool, `UPDATE revisions SET path = $1 WHERE (doc_id = $2 AND id = $3) RETURNING *;`, [revisionPath, revision.doc_id, id]);
     }
