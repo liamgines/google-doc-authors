@@ -363,6 +363,9 @@ function revisionCharMake(permissionId: string | undefined, char: string): Revis
 
 // https://github.com/kpdecker/jsdiff#change-objects
 function revisionUserTextsToChars(users: Array<RevisionUser>, texts: Array<string>): Array<RevisionChar> {
+    // https://stackoverflow.com/a/22962887
+    texts = texts.map(text => text.replace(/[\r\n]{3,}/g, "\n\n"));
+
     let revisionChars: Array<RevisionChar> = [];
     let maxTextLength = 0;
     for (let text of texts) {
