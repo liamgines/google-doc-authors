@@ -3,6 +3,16 @@ import { databaseQueryOnlyRow, databaseQueryRows } from "./helpers";
 import { getUserByGoogleAccountId } from "./usersTable";
 import { getDocByGoogleId } from "./docsTable";
 
+export async function deleteUserDocByIds(userId: number, docId: number): Promise<any | null> {
+    return await databaseQueryOnlyRow(pool, `DELETE FROM userdocs WHERE (user_id = $1 AND doc_id = $2) RETURNING *;`, [userId, docId]);
+}
+
+export async function deleteUserDocByGoogleIds(userGoogleId: string, docGoogleId: string): Promise<any | null> {
+    const user = await getUserByGoogleAccountId(userGoogleId);
+    const doc = await getDocByGoogleId(docGoogleId);
+    return await deleteUserDocByIds(user.id, doc.id);
+}
+
 export async function getUserDocByIds(userId: number, docId: number): Promise<any | null> {
     return await databaseQueryOnlyRow(pool, `SELECT * FROM userdocs WHERE (user_id = $1 AND doc_id = $2);`, [userId, docId]);
 }

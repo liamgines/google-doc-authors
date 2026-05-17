@@ -16,7 +16,19 @@ function dateToClientString(date: Date) {
     return `${month} ${day}${(year === currentYear) ? "" : `, ${year}`}`;
 }
 
-function GoogleDocsTable({ googleDocs, setUser }) {
+function GoogleDocsTable({ googleDocs, setUser, setGoogleDocs }) {
+    async function userDocDelete(docId: string) {
+        try {
+            const serverResponse = await fetch("/api/docId", { method: "DELETE", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                                                                                 body: new URLSearchParams({ docId: docId }) });
+            if (!serverResponse.ok) return console.error("Doc deletion failed");
+            setGoogleDocs(googleDocs => googleDocs.filter(googleDoc => googleDoc.google_id !== docId));
+        }
+        catch (error) {
+            console.error("Doc deletion error: ", error);
+        }
+    }
+
     const rows = googleDocs.map(googleDoc => {
         const modifiedDate: Date = new Date(googleDoc.modified_time);
         const user = googleDoc.last_modifying_user;
@@ -26,13 +38,14 @@ function GoogleDocsTable({ googleDocs, setUser }) {
                     <td>{user.photo_link && (<img src={user.photo_link} referrerPolicy="no-referrer" />)} {user.name}</td>
                     <td>{googleDoc.analysis_status}</td>
                     <td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id) }>Reanalyze</button></td>
+                    <td><button onClick={async () => await userDocDelete(googleDoc.google_id) }>Delete</button></td>
                </tr>);
     });
 
     return (
         <table>
             <thead>
-                <tr><th>Google Doc</th><th>Date modified</th><th>Last modified by</th><th>Status</th><th></th></tr>
+                <tr><th>Google Doc</th><th>Date modified</th><th>Last modified by</th><th>Status</th><th></th><th></th></tr>
             </thead>
 
             <tbody>
@@ -55,7 +68,7 @@ function GoogleDocsList({ user, setUser }) {
 
     return (<>
         <GoogleDocsPicker user={user} setUser={setUser} setGoogleDocs={setGoogleDocs} />
-        <GoogleDocsTable googleDocs={googleDocs} setUser={setUser} />
+        <GoogleDocsTable googleDocs={googleDocs} setUser={setUser} setGoogleDocs={setGoogleDocs} />
     </>);
 }
 

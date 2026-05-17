@@ -521,6 +521,17 @@ async function createPlaceholderRevisions(docGoogleId: string, revisions: Array<
     }
 }
 
+app.delete("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
+    const docId = request.body.docId;
+    const userSession = (request.session as UserSession);
+    const user = userSession.user as User;
+
+    const doc = await docsTable.getDocByGoogleId(docId);
+    const userdoc = await userDocsTable.deleteUserDocByGoogleIds(user.google_account_id, doc.google_id);
+    if (!doc || !userdoc) return response.status(STATUS_NOT_FOUND).json(false);
+    return response.json(true);
+});
+
 // https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
 app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
     const docId = request.body.docId;
