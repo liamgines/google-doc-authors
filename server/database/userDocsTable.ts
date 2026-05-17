@@ -14,10 +14,10 @@ export async function getUserDocByGoogleIds(userGoogleId: string, docGoogleId: s
 }
 
 // https://blog.purestorage.com/purely-technical/sql-update-vs-insert-vs-upsert/
-// NOTE: A path that is an empty string indicates that the contributions are in the process of being determined
-export async function createUserDoc(userId: number, docId: number, revisionId: string, modifiedTime: string, path: string = ""): Promise<any> {
+// NOTE: A result that is an empty string indicates that the contributions are in the process of being determined
+export async function createUserDoc(userId: number, docId: number, revisionId: string, modifiedTime: string, result: string = ""): Promise<any> {
     try {
-        return await databaseQueryOnlyRow(pool, `INSERT INTO userdocs (user_id, doc_id, revision_id, modified_time, path, analysis_start_time) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;`, [userId, docId, revisionId, modifiedTime, path]);
+        return await databaseQueryOnlyRow(pool, `INSERT INTO userdocs (user_id, doc_id, revision_id, modified_time, result, analysis_start_time) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;`, [userId, docId, revisionId, modifiedTime, result]);
     }
     catch (error) {
         console.error(error);
@@ -31,7 +31,7 @@ function millisecondsToSeconds(milliseconds: number): number {
     return milliseconds * SECONDS_PER_MILLISECOND;
 }
 
-export async function setNullPathAfterEnoughTimeSinceLastAnalysis(userId: number, docId: number, secondsToWait: number = 150) {
+export async function setNullResultAfterEnoughTimeSinceLastAnalysis(userId: number, docId: number, secondsToWait: number = 150) {
     const oldUserdoc = await getUserDocByIds(userId, docId);
     const currentDate = new Date();
     const analysisStartDate = new Date(oldUserdoc.analysis_start_time);
@@ -39,30 +39,30 @@ export async function setNullPathAfterEnoughTimeSinceLastAnalysis(userId: number
     const secondsAnalyzed: number = millisecondsToSeconds(millisecondsAnalyzed);
 
     // This will allow a new analysis request to start if enough time has passed
-    const allowNullPath: boolean = (secondsAnalyzed >= secondsToWait);
-    const newPath: string = (allowNullPath ? null : oldUserdoc.path);
-    return await databaseQueryOnlyRow(pool, `UPDATE userdocs SET path = $1 WHERE (user_id = $2 AND doc_id = $3) RETURNING *;`, [newPath, userId, docId]);
+    const allowNullResult: boolean = (secondsAnalyzed >= secondsToWait);
+    const newResult: string = (allowNullResult ? null : oldUserdoc.result);
+    return await databaseQueryOnlyRow(pool, `UPDATE userdocs SET result = $1 WHERE (user_id = $2 AND doc_id = $3) RETURNING *;`, [newResult, userId, docId]);
 }
 
-// NOTE: A path that is null indicates that the evaluation failed
-export async function updateRevisionIdTimeAndPath(userId: number, docId: number, revisionId: string, modifiedTime: string, path: string | null = null) {
-    const startNewAnalysis = (path === "");
-    const analysisCompleted: boolean = (path !== null && path !== "");
-    return await databaseQueryOnlyRow(pool, `UPDATE userdocs SET revision_id = $1, modified_time = $2, path = $3,
+// NOTE: A result that is null indicates that the evaluation failed
+export async function updateRevisionIdTimeAndResult(userId: number, docId: number, revisionId: string, modifiedTime: string, result: string | null = null) {
+    const startNewAnalysis = (result === "");
+    const analysisCompleted: boolean = (result !== null && result !== "");
+    return await databaseQueryOnlyRow(pool, `UPDATE userdocs SET revision_id = $1, modified_time = $2, result = $3,
                                              analysis_start_time = CASE WHEN $4 THEN NOW() ELSE analysis_start_time END,
                                              last_analysis_time = CASE WHEN $5 THEN NOW() ELSE last_analysis_time END
-                                             WHERE (user_id = $6 AND doc_id = $7) RETURNING *;`, [revisionId, modifiedTime, path, startNewAnalysis, analysisCompleted, userId, docId]);
+                                             WHERE (user_id = $6 AND doc_id = $7) RETURNING *;`, [revisionId, modifiedTime, result, startNewAnalysis, analysisCompleted, userId, docId]);
 }
 
-// NOTE: A path that is not null and not empty indicates that the contribution evaluation succeeded
-export async function createOrUpdateUserDoc(userGoogleId: string, docGoogleId: string, revisionId: string, modifiedTime: string, path: string | null = ""): Promise<any> {
+// NOTE: A result that is not null and not empty indicates that the contribution evaluation succeeded
+export async function createOrUpdateUserDoc(userGoogleId: string, docGoogleId: string, revisionId: string, modifiedTime: string, result: string | null = ""): Promise<any> {
     const user = await getUserByGoogleAccountId(userGoogleId);
     const doc = await getDocByGoogleId(docGoogleId);
 
     let userdoc = await getUserDocByIds(user.id, doc.id);
-    // The typescript error reported below this line should not be a problem because if there is no user doc, we can assume that the doc will start out being analyzed (meaning the path should never be null to begin with)
-    if (!userdoc) userdoc = await createUserDoc(user.id, doc.id, revisionId, modifiedTime, path);
-    else          userdoc = await updateRevisionIdTimeAndPath(user.id, doc.id, revisionId, modifiedTime, path);
+    // The typescript error reported below this line should not be a problem because if there is no user doc, we can assume that the doc will start out being analyzed (meaning the result should never be null to begin with)
+    if (!userdoc) userdoc = await createUserDoc(user.id, doc.id, revisionId, modifiedTime, result);
+    else          userdoc = await updateRevisionIdTimeAndResult(user.id, doc.id, revisionId, modifiedTime, result);
 
     return userdoc;
 }
@@ -81,13 +81,13 @@ export async function getAllSubmittedByUser(userId: number): Promise<any> {
                                           INNER JOIN authors ON revisions.author_id = authors.id;`, [userId]);
 }
 
-export function getAnalysisStatus(userDocPath: string | null): string {
-    if (userDocPath === null) return "Failed";
-    if (!userDocPath.length) return "Processing";
+export function getAnalysisStatus(userDocResult: string | null): string {
+    if (userDocResult === null) return "Failed";
+    if (!userDocResult.length) return "Processing";
     return "Complete";
 }
 
-export async function getPath(userId: number, docId: number): Promise<string | null> {
+export async function getResult(userId: number, docId: number): Promise<string | null> {
     const userdoc = await getUserDocByIds(userId, docId);
-    return userdoc.path;
+    return userdoc.result;
 }

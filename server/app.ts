@@ -11,8 +11,6 @@ import * as revisionsTable from "./database/revisionsTable";
 import * as userDocsTable from "./database/userDocsTable";
 import * as authorsTable from "./database/authorsTable";
 import { diffChars } from "diff";
-import fs from "node:fs";
-import path from "node:path";
 
 const STATUS_TOO_MANY_REQUESTS = 429;
 const STATUS_NOT_FOUND = 404;
@@ -500,8 +498,8 @@ interface ClientDoc {
 async function clientDocMake(doc: any, userdoc: any, lastModifyingUser: any): ClientDoc {
     const permissionId = (lastModifyingUser && lastModifyingUser.permissionId) ? lastModifyingUser.permissionId : ANONYMOUS_PERMISSION_ID;
     const lastModifyingUserToReturn = await authorsTable.getAuthorByPermissionId(permissionId);
-    const path = await userDocsTable.getPath(userdoc.user_id, userdoc.doc_id);
-    const analysisStatus = userDocsTable.getAnalysisStatus(path);
+    const result = await userDocsTable.getResult(userdoc.user_id, userdoc.doc_id);
+    const analysisStatus = userDocsTable.getAnalysisStatus(result);
     return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: userdoc.modified_time, last_modifying_user: lastModifyingUserToReturn, analysis_status: analysisStatus };
 }
 
@@ -549,9 +547,9 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     // Check if the document is already being evaluated before updating and proceeding with the analysis
     // If it's currently being evaluated, return an early response
     let userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, doc.google_id);
-    if (userdoc && userdoc.path === "") {
-        userdoc = await userDocsTable.setNullPathAfterEnoughTimeSinceLastAnalysis(userdoc.user_id, userdoc.doc_id);
-        if (userdoc.path === "") return response.json(await clientDocMake(doc, userdoc, newestRevision.lastModifyingUser));
+    if (userdoc && userdoc.result === "") {
+        userdoc = await userDocsTable.setNullResultAfterEnoughTimeSinceLastAnalysis(userdoc.user_id, userdoc.doc_id);
+        if (userdoc.result === "") return response.json(await clientDocMake(doc, userdoc, newestRevision.lastModifyingUser));
     }
 
     userdoc = await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, "");
@@ -572,9 +570,7 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const permissionIdCharPercentages = permissionIdCharCountsToPercentages(permissionIdCharCounts);
 
     const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers, permissionIdCharCounts: permissionIdCharCounts, permissionIdCharPercentages: permissionIdCharPercentages };
-    const googleDocPath = path.join(__dirname, "user_docs", `${user.google_account_id}-${doc.google_id}.json`);
-    fs.writeFileSync(googleDocPath, JSON.stringify(googleDoc));
-    return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, googleDocPath);
+    return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, JSON.stringify(googleDoc));
 });
 
 app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
@@ -585,8 +581,8 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
 
     const userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, docId);
     if (!userdoc) return response.status(STATUS_NOT_FOUND).json({ message: "Specified document could not be found." });
-    // !userdoc.path indicates null or ""
-    else if (!userdoc.path) {
+    // !userdoc.result indicates null or ""
+    else if (!userdoc.result) {
         // It doesn't matter who we credit this revision to, we attribute credit to an anonymous user when the quotes variable gets updated.
         // We are returning text corresponding to the revision id currently in the database.
         const placeholderUser = {} as RevisionUser;
@@ -611,11 +607,11 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
         const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers, permissionIdCharCounts: permissionIdCharCounts, permissionIdCharPercentages: permissionIdCharPercentages };
 
         // Failed dependency indicates that the previous analysis request failed. Service unavailable indicates that the previous analysis request is still being processed.
-        const errorCode = (userdoc.path === null) ? STATUS_FAILED_DEPENDENCY : STATUS_SERVICE_UNAVAILABLE;
+        const errorCode = (userdoc.result === null) ? STATUS_FAILED_DEPENDENCY : STATUS_SERVICE_UNAVAILABLE;
         return response.status(errorCode).json(googleDoc);
     }
 
-    const googleDoc = JSON.parse(fs.readFileSync(userdoc.path, { encoding: "utf-8", flag: "r" }));
+    const googleDoc = JSON.parse(await userDocsTable.getResult(userdoc.user_id, userdoc.doc_id));
     return response.json(googleDoc);
 });
 
@@ -625,8 +621,8 @@ app.get("/api/docIds", requestIsAuthorizedWithGoogle, async (request: Request, r
     const clientDocs = await userDocsTable.getAllSubmittedByUser(user.id);
     let clientDocsWithStatus = [];
     for (const clientDoc of clientDocs) {
-        const path = await userDocsTable.getPath(user.id, clientDoc.id);
-        const analysisStatus = userDocsTable.getAnalysisStatus(path);
+        const result = await userDocsTable.getResult(user.id, clientDoc.id);
+        const analysisStatus = userDocsTable.getAnalysisStatus(result);
         clientDocsWithStatus.push({...clientDoc, analysis_status: analysisStatus });
     }
     return response.json(clientDocsWithStatus);
@@ -654,10 +650,10 @@ app.get("/api/authors", requestIsAuthorizedWithGoogle, async (request: Request, 
     let allChars = 0;
     for (const doc of docs) {
         const userdoc = await userDocsTable.getUserDocByIds(user.id, doc.id);
-        // If the path is empty, it is either null or an empty string. This means the previous analysis failed or we are still processing the doc.
-        if (!userdoc || !userdoc.path) continue;
+        // If the result is empty, it is either null or an empty string. This means the previous analysis failed or we are still processing the doc.
+        if (!userdoc || !userdoc.result) continue;
 
-        const googleDoc = JSON.parse(fs.readFileSync(userdoc.path, { encoding: "utf-8", flag: "r" }));
+        const googleDoc = JSON.parse(await userDocsTable.getResult(userdoc.user_id, userdoc.doc_id));
         const permissionIdCharCounts = googleDoc.permissionIdCharCounts;
         const permissionIdUsers = googleDoc.permissionIdUsers;
 
