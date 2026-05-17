@@ -50,7 +50,7 @@ function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharC
         let userColor = permissionIdColors[permissionId];
         let userColorItem = (<li key={i++} style={{ color: userColor }}>
                              <span style={{ color: "black" }}>
-                                {user.photoLink && (<img src={user.photoLink} referrerPolicy="no-referrer" />)}
+                                {(user.photoLink && (<img src={user.photoLink} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />}
                                 {user.displayName} {user.emailAddress ? `(${user.emailAddress})` : ""} | {(permissionId in permissionIdCharCounts) ? permissionIdCharCounts[permissionId] : 0} characters | {(permissionId in permissionIdCharPercentages) ? permissionIdCharPercentages[permissionId] : 0}%
                              </span>
                              </li>);

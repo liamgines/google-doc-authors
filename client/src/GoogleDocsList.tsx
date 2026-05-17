@@ -37,7 +37,7 @@ function GoogleDocsTable({ googleDocs, setUser, setGoogleDocs }) {
         return (<tr key={googleDoc.google_id}>
                     <td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.name}</a></td>
                     <td>{dateToClientString(modifiedDate)}</td>
-                    <td>{user.photo_link && (<img src={user.photo_link} referrerPolicy="no-referrer" />)} {user.name}</td>
+                    <td>{(user.photo_link && (<img src={user.photo_link} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />} {user.name}</td>
                     <td>{googleDoc.analysis_status}</td>
                     <td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id) }>Reanalyze</button></td>
                     <td><button onClick={async () => await userDocDelete(googleDoc.google_id) }>Delete</button></td>

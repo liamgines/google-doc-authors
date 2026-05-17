@@ -10,6 +10,7 @@ import * as docsTable from "./database/docsTable";
 import * as revisionsTable from "./database/revisionsTable";
 import * as userDocsTable from "./database/userDocsTable";
 import * as authorsTable from "./database/authorsTable";
+import path from "node:path";
 import { diffChars } from "diff";
 
 const STATUS_TOO_MANY_REQUESTS = 429;
@@ -33,6 +34,7 @@ const port = process.env.PUBLIC_SERVER_PORT;
 app.use(cors());
 app.use(express.json());    // To parse application/json
 app.use(express.urlencoded({ extended: true }));  // To parse application/x-www-form-urlencoded
+app.use("/api/public", express.static(path.join(__dirname, "public")));
 
 interface User {
     id: number,
