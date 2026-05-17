@@ -340,7 +340,7 @@ async function docRevisionTexts(docId: string, revisions: Array<Revision>, acces
             const permissionId = (user && user.permissionId) ? user.permissionId : ANONYMOUS_PERMISSION_ID;
             const author = await authorsTable.getAuthorByPermissionId(permissionId);
 
-            let storedRevision = await revisionsTable.updateRevisionPathIfNull(docId, revision.id, revisionText);
+            let storedRevision = await revisionsTable.updateRevisionTextIfNull(docId, revision.id, revisionText);
             if (!storedRevision) return [];
         }
         revisionTexts.push(revisionText);
