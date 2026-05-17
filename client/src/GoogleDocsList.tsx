@@ -17,6 +17,8 @@ function dateToClientString(date: Date) {
 }
 
 function GoogleDocsTable({ googleDocs, setUser, setGoogleDocs }) {
+    if (!googleDocs.length) return (<p>No docs yet.</p>);
+
     async function userDocDelete(docId: string) {
         try {
             const serverResponse = await fetch("/api/docId", { method: "DELETE", headers: { "Content-Type": "application/x-www-form-urlencoded" },
