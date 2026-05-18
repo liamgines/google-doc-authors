@@ -4,11 +4,11 @@
   "description": "",
   "main": "app.ts",
   "scripts": {
-    "start": "tsx --env-file ../.env ./app.ts",
+    "server": "tsx --env-file ../.env ./app.ts",
     "debug": "tsx --inspect --env-file ../.env ./app.ts",
-    "startDatabase": "docker compose up --detach",
-    "stopDatabase": "docker compose down",
-    "seedDatabase": "tsx --env-file ../.env ./database/seed.ts",
+    "start-database": "docker compose up --detach",
+    "stop-database": "docker compose down",
+    "seed-database": "tsx --env-file ../.env ./database/seed.ts",
     "type-check": "tsc --noEmit",
     "prepare": "simple-git-hooks",
     "test": "echo \"Error: no test specified\" && exit 1"
