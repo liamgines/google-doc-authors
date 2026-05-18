@@ -546,7 +546,7 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const accessToken: string = tokens.access_token || "";
 
     const revisions = await docRevisions(docId, accessToken);
-    if (!revisions.length) return next();
+    if (!revisions.length) return response.status(STATUS_NOT_FOUND).json({ message: "Revisions could not be retrieved." });
 
     const docName: string = await googleGetDocName(docId, accessToken);
     const doc = await docsTable.createDocIfNotExistsOrUpdate(docId, docName || undefined);
