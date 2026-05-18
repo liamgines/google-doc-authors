@@ -608,7 +608,7 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
         const revisions: Array<Revision> = [placeholderRevision];
 
         const revisionTexts: Array<string> = await docRevisionTexts(docId, revisions, tokens.access_token as string);
-        if (!revisionTexts.length) return next();
+        if (!revisionTexts.length) return response.status(STATUS_NOT_FOUND).json({ message: "Document text could not be retrieved." });
 
         const revisionChars: Array<RevisionChar> = revisionUserTextsToChars(revisionUsers, revisionTexts);
 
