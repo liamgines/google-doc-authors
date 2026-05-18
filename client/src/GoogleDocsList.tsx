@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import GoogleDocsPicker, { userRefreshAccessToken, userRequestDocAnalysis }  from "./GoogleDocsPicker";
 
+const MILLISECONDS_PER_POLL = 5000;
+
 async function userRefreshAccessAndRequestAnalysis(setUser, docId) {
     await userRefreshAccessToken(setUser);
     await userRequestDocAnalysis(docId);
@@ -67,6 +69,14 @@ function GoogleDocsList({ user, setUser }) {
     }
 
     useEffect(() => { fetchAndSetGoogleDocs() }, []);
+
+    let analyzingDocs = googleDocs.some(googleDoc => googleDoc.analysis_status === "Processing");
+    useEffect(() => {
+        if (!analyzingDocs) return;
+
+        const intervalId = setInterval(() => fetchAndSetGoogleDocs(), MILLISECONDS_PER_POLL);
+        return () => clearInterval(intervalId);
+    }, [analyzingDocs]);
 
     return (<>
         <GoogleDocsPicker user={user} setUser={setUser} setGoogleDocs={setGoogleDocs} />
