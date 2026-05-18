@@ -5,7 +5,8 @@ const MILLISECONDS_PER_POLL = 5000;
 
 async function userRefreshAccessAndRequestAnalysis(setUser, docId, setGoogleDocs) {
     await userRefreshAccessToken(setUser);
-    await userRequestDocAnalysis(docId, setGoogleDocs);
+    const serverGoogleDoc = await userRequestDocAnalysis(docId);
+    setGoogleDocs(googleDocs => googleDocs.map(doc => (doc.google_id === docId) ? serverGoogleDoc : doc));
 }
 
 function dateToClientString(date: Date) {

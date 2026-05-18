@@ -4,11 +4,10 @@ import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-
 // https://developers.google.com/workspace/drive/picker/guides/overview
 // https://github.com/googleworkspace/drive-picker-element/tree/main/packages/drive-picker-element#event-details
 
-export async function userRequestDocAnalysis(docId, setGoogleDocs) {
+export async function userRequestDocAnalysis(docId) {
     const serverResponse = await fetch("/api/docId", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ docId: docId }) });
     if (!serverResponse.ok) return console.error("Document id could not be uploaded");
     const serverGoogleDoc = await serverResponse.json();
-    setGoogleDocs(googleDocs => googleDocs.map(doc => (doc.google_id === docId) ? serverGoogleDoc : doc));
     return serverGoogleDoc;
 }
 
@@ -36,7 +35,7 @@ function GoogleDocsPicker({ user, setUser, setGoogleDocs }) {
         try {
             const docs = event.detail.docs;
             const docId = docs[0].id;
-            const serverGoogleDoc = await userRequestDocAnalysis(docId, setGoogleDocs);
+            const serverGoogleDoc = await userRequestDocAnalysis(docId);
             if (!serverGoogleDoc) return console.error("Error: Google doc revisions could not be retrieved.");
             setGoogleDocs(googleDocs => googleDocs.filter(googleDoc => googleDoc.google_id !== serverGoogleDoc.google_id).concat([serverGoogleDoc]));
         }
