@@ -20,6 +20,7 @@ export async function getUserDocByIds(userId: number, docId: number): Promise<an
 export async function getUserDocByGoogleIds(userGoogleId: string, docGoogleId: string): Promise<any | null> {
     const user = await getUserByGoogleAccountId(userGoogleId);
     const doc = await getDocByGoogleId(docGoogleId);
+    if (!user || !doc) return null;
     return await getUserDocByIds(user.id, doc.id);
 }
 
