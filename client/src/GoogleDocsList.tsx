@@ -49,7 +49,7 @@ function GoogleDocsTable({ googleDocs, setUser, setGoogleDocs }) {
 
     const rows = googleDocs.map(googleDoc => {
         const modifiedDate: Date = new Date(googleDoc.modified_time);
-        const user = googleDoc.last_modifying_user;
+        const user = googleDoc.creator;
         return (<tr key={googleDoc.google_id}>
                     <td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.name}</a></td>
                     <td>{dateToClientString(modifiedDate)}</td>
@@ -63,7 +63,7 @@ function GoogleDocsTable({ googleDocs, setUser, setGoogleDocs }) {
     return (
         <table>
             <thead>
-                <tr><th>Google Doc</th><th>Date modified</th><th>Last modified by</th><th>Status</th><th></th><th></th></tr>
+                <tr><th>Google Doc</th><th>Date modified</th><th>Created by</th><th>Status</th><th></th><th></th></tr>
             </thead>
 
             <tbody>

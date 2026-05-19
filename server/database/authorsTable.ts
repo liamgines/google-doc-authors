@@ -5,6 +5,10 @@ export async function getAuthorByPermissionId(permissionId: string) {
     return await databaseQueryOnlyRow(pool, `SELECT * FROM authors WHERE (permission_id = $1);`, [permissionId]);
 }
 
+export async function getAuthorById(id: number) {
+    return await databaseQueryOnlyRow(pool, `SELECT * FROM authors WHERE (id = $1);`, [id]);
+}
+
 export async function createAuthor(permissionId: string, name: string | null = null, email: string | null = null, photoLink: string | null = null): Promise<any> {
     return await databaseQueryOnlyRow(pool, `INSERT INTO authors (permission_id, name, email, photo_link) VALUES ($1, $2, $3, $4) RETURNING *;`, [permissionId, name, email, photoLink]);
 }

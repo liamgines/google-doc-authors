@@ -505,7 +505,11 @@ async function clientDocMake(doc: any, userdoc: any, lastModifyingUser: any, mod
     const lastModifyingUserToReturn = await authorsTable.getAuthorByPermissionId(permissionId);
     const result = await userDocsTable.getResult(userdoc.user_id, userdoc.doc_id);
     const analysisStatus = userDocsTable.getAnalysisStatus(result);
-    return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: modifiedTime, last_modifying_user: lastModifyingUserToReturn, analysis_status: analysisStatus };
+
+    const firstRevision = await docsTable.getFirstRevision(doc.google_id);
+    const docCreator = await authorsTable.getAuthorById(firstRevision.author_id);
+
+    return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: modifiedTime, last_modifying_user: lastModifyingUserToReturn, analysis_status: analysisStatus, creator: docCreator };
 }
 
 async function createAuthorsFromRevisionUsers(revisionUsers: Array<RevisionUser>): Promise<void> {
@@ -587,6 +591,7 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const permissionIdCharPercentages = permissionIdCharCountsToPercentages(permissionIdCharCounts);
 
     const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers, permissionIdCharCounts: permissionIdCharCounts, permissionIdCharPercentages: permissionIdCharPercentages };
+
     return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, JSON.stringify(googleDoc));
 });
 
@@ -640,7 +645,11 @@ app.get("/api/docIds", requestIsAuthorizedWithGoogle, async (request: Request, r
     for (const clientDoc of clientDocs) {
         const result = await userDocsTable.getResult(user.id, clientDoc.id);
         const analysisStatus = userDocsTable.getAnalysisStatus(result);
-        clientDocsWithStatus.push({...clientDoc, analysis_status: analysisStatus });
+
+        const firstRevision = await docsTable.getFirstRevision(clientDoc.google_id);
+        const docCreator = await authorsTable.getAuthorById(firstRevision.author_id);
+
+        clientDocsWithStatus.push({...clientDoc, analysis_status: analysisStatus, creator: docCreator });
     }
     return response.json(clientDocsWithStatus);
 });

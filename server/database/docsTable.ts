@@ -32,3 +32,9 @@ export async function createDocIfNotExistsOrUpdate(googleId: string, name: strin
 export async function getAllDocsSubmittedByUser(userId: number): Promise<any> {
     return await databaseQueryRows(pool, `SELECT docs.id, docs.google_id, docs.name FROM docs INNER JOIN userdocs ON docs.id = userdocs.doc_id AND userdocs.user_id = $1;`, [userId]);
 }
+
+export async function getFirstRevision(googleId: string) {
+    return await databaseQueryOnlyRow(pool, `SELECT revisions.id, revisions.doc_id, revisions.author_id, revisions.text, revisions.modified_time FROM docs
+                                             INNER JOIN revisions ON docs.google_id = $1 AND docs.id = revisions.doc_id
+                                             ORDER BY revisions.modified_time ASC LIMIT 1;`, [googleId]);
+}
