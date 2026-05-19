@@ -13,7 +13,13 @@ function dateToComponents(date: Date) {
     const month: string = date.toLocaleString("default", { month: "short" });
     const day: string = date.toLocaleString("default", { day: "numeric" });
     const year: string = date.toLocaleString("default", { year: "numeric" });
-    return { month: month, day: day, year: year };
+
+    const hour: string = date.toLocaleString("default", { hour: "numeric" });
+    const minute: string = date.toLocaleString("default", { minute: "2-digit" });
+
+    const hourClock = hour.split(" ");
+    const clock = hourClock[1];
+    return { month: month, day: day, year: year, hour: hourClock[0], minute: minute, clock: clock };
 }
 
 function dateToClientString(date: Date) {
@@ -22,6 +28,7 @@ function dateToClientString(date: Date) {
     const currentDate: Date = new Date();
     const current = dateToComponents(currentDate);
 
+    if (input.month === current.month && input.day === current.day && input.year === current.year) return `${input.hour}:${input.minute} ${input.clock}`;
     return `${input.month} ${input.day}${(input.year === current.year) ? "" : `, ${input.year}`}`;
 }
 
