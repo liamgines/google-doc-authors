@@ -9,14 +9,20 @@ async function userRefreshAccessAndRequestAnalysis(setUser, docId, setGoogleDocs
     setGoogleDocs(googleDocs => googleDocs.map(doc => (doc.google_id === docId) ? serverGoogleDoc : doc));
 }
 
-function dateToClientString(date: Date) {
-    const currentDate: Date = new Date();
-    const currentYear: string = currentDate.toLocaleString("default", { year: "numeric" });
-
+function dateToComponents(date: Date) {
     const month: string = date.toLocaleString("default", { month: "short" });
     const day: string = date.toLocaleString("default", { day: "numeric" });
     const year: string = date.toLocaleString("default", { year: "numeric" });
-    return `${month} ${day}${(year === currentYear) ? "" : `, ${year}`}`;
+    return { month: month, day: day, year: year };
+}
+
+function dateToClientString(date: Date) {
+    const input = dateToComponents(date);
+
+    const currentDate: Date = new Date();
+    const current = dateToComponents(currentDate);
+
+    return `${input.month} ${input.day}${(input.year === current.year) ? "" : `, ${input.year}`}`;
 }
 
 function GoogleDocsTable({ googleDocs, setUser, setGoogleDocs }) {
