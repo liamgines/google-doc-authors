@@ -519,10 +519,11 @@ async function createAuthorsFromRevisionUsers(revisionUsers: Array<RevisionUser>
 async function createPlaceholderRevisions(docGoogleId: string, revisions: Array<Revision>): Promise<void> {
     for (const revision of revisions) {
         const user = revision.lastModifyingUser;
+        const modifiedTime: string = revision.modifiedTime;
         const permissionId = (user && user.permissionId) ? user.permissionId : ANONYMOUS_PERMISSION_ID;
         const author = await authorsTable.getAuthorByPermissionId(permissionId);
         // We haven't fetched the text when this is called
-        await revisionsTable.createRevisionIfNotExists(docGoogleId, revision.id, null, author.id);
+        await revisionsTable.createRevisionIfNotExists(docGoogleId, revision.id, null, author.id, modifiedTime);
     }
 }
 

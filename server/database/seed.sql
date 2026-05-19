@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS revisions (
     doc_id INTEGER,
     author_id INTEGER NOT NULL,
     text TEXT,
+    modified_time TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (id, doc_id),
     CONSTRAINT fk_revisions_docs FOREIGN KEY (doc_id) REFERENCES docs (id),
     CONSTRAINT fk_revisions_authors FOREIGN KEY (author_id) REFERENCES authors (id)

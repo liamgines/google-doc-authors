@@ -12,10 +12,10 @@ export async function getRevisionTextByGoogleIds(docGoogleId: string, id: string
     return revision.text;
 }
 
-export async function createRevision(docGoogleId: string, id: string, text: string | null, authorId: number): Promise<any> {
+export async function createRevision(docGoogleId: string, id: string, text: string | null, authorId: number, modifiedTime: string): Promise<any> {
     try {
         const doc = await getDocByGoogleId(docGoogleId);
-        return await databaseQueryOnlyRow(pool, `INSERT INTO revisions (id, doc_id, text, author_id) VALUES ($1, $2, $3, $4) RETURNING *;`, [id, doc.id, text, authorId]);
+        return await databaseQueryOnlyRow(pool, `INSERT INTO revisions (id, doc_id, text, author_id, modified_time) VALUES ($1, $2, $3, $4, $5) RETURNING *;`, [id, doc.id, text, authorId, modifiedTime]);
     }
     catch (error) {
         console.error(error);
@@ -23,9 +23,9 @@ export async function createRevision(docGoogleId: string, id: string, text: stri
     }
 }
 
-export async function createRevisionIfNotExists(docGoogleId: string, id: string, text: string | null, authorId: number): Promise<any> {
+export async function createRevisionIfNotExists(docGoogleId: string, id: string, text: string | null, authorId: number, modifiedTime: string): Promise<any> {
     let revision = await getRevisionByGoogleIds(docGoogleId, id);
-    if (!revision) revision = await createRevision(docGoogleId, id, text, authorId);
+    if (!revision) revision = await createRevision(docGoogleId, id, text, authorId, modifiedTime);
     return revision;
 }
 
