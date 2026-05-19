@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS userdocs (
     user_id INTEGER,
     doc_id INTEGER,
     revision_id TEXT NOT NULL,
-    modified_time TIMESTAMPTZ NOT NULL,
     analysis_start_time TIMESTAMPTZ NOT NULL,
     last_analysis_time TIMESTAMPTZ,
     result TEXT,

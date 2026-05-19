@@ -500,12 +500,12 @@ interface ClientDoc {
     last_modifying_user: any
 }
 
-async function clientDocMake(doc: any, userdoc: any, lastModifyingUser: any): ClientDoc {
+async function clientDocMake(doc: any, userdoc: any, lastModifyingUser: any, modifiedTime: string): ClientDoc {
     const permissionId = (lastModifyingUser && lastModifyingUser.permissionId) ? lastModifyingUser.permissionId : ANONYMOUS_PERMISSION_ID;
     const lastModifyingUserToReturn = await authorsTable.getAuthorByPermissionId(permissionId);
     const result = await userDocsTable.getResult(userdoc.user_id, userdoc.doc_id);
     const analysisStatus = userDocsTable.getAnalysisStatus(result);
-    return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: userdoc.modified_time, last_modifying_user: lastModifyingUserToReturn, analysis_status: analysisStatus };
+    return { id: doc.id, google_id: doc.google_id, name: doc.name, modified_time: modifiedTime, last_modifying_user: lastModifyingUserToReturn, analysis_status: analysisStatus };
 }
 
 async function createAuthorsFromRevisionUsers(revisionUsers: Array<RevisionUser>): Promise<void> {
@@ -566,16 +566,16 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     let userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, doc.google_id);
     if (userdoc && userdoc.result === "") {
         userdoc = await userDocsTable.setNullResultAfterEnoughTimeSinceLastAnalysis(userdoc.user_id, userdoc.doc_id);
-        if (userdoc.result === "") return response.json(await clientDocMake(doc, userdoc, newestRevision.lastModifyingUser));
+        if (userdoc.result === "") return response.json(await clientDocMake(doc, userdoc, newestRevision.lastModifyingUser, newestRevision.modifiedTime));
     }
 
-    userdoc = await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, "");
+    userdoc = await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, "");
     if (!userdoc) return next();
 
-    response.json(await clientDocMake(doc, userdoc, newestRevision.lastModifyingUser));
+    response.json(await clientDocMake(doc, userdoc, newestRevision.lastModifyingUser, newestRevision.modifiedTime));
 
     const revisionTexts: Array<string> = await docRevisionTexts(docId, revisions, accessToken);
-    if (!revisionTexts.length) return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, null);
+    if (!revisionTexts.length) return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, null);
 
     // @ts-ignore
     const revisionChars: Array<RevisionChar> = revisionUserTextsToChars(revisionUsers, revisionTexts);
@@ -587,7 +587,7 @@ app.post("/api/docId", requestIsAuthorizedWithGoogle, async (request: Request, r
     const permissionIdCharPercentages = permissionIdCharCountsToPercentages(permissionIdCharCounts);
 
     const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers, permissionIdCharCounts: permissionIdCharCounts, permissionIdCharPercentages: permissionIdCharPercentages };
-    return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, newestRevision.modifiedTime, JSON.stringify(googleDoc));
+    return await userDocsTable.createOrUpdateUserDoc(user.google_account_id, doc.google_id, newestRevision.id, JSON.stringify(googleDoc));
 });
 
 app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
