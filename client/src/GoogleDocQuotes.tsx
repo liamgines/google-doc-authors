@@ -48,15 +48,14 @@ function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharC
     for (let permissionId in permissionIdUsers) {
         let user = permissionIdUsers[permissionId];
         let userColor = permissionIdColors[permissionId];
-        let userColorItem = (<li key={i++} style={{ color: userColor }}>
-                             <span style={{ color: "black" }}>
-                                {(user.photoLink && (<img src={user.photoLink} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />}
-                                {user.displayName} {user.emailAddress ? `(${user.emailAddress})` : ""} | {(permissionId in permissionIdCharCounts) ? permissionIdCharCounts[permissionId] : 0} characters | {(permissionId in permissionIdCharPercentages) ? permissionIdCharPercentages[permissionId] : 0}%
-                             </span>
-                             </li>);
-        userColorKey.push(userColorItem);
+        let userColorRow = (<tr key={i++}>
+                                <td style={{ backgroundColor: userColor }}>{(user.photoLink && (<img src={user.photoLink} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />} {user.displayName} {user.emailAddress ? `(${user.emailAddress})` : ""}</td>
+                                <td>{(permissionId in permissionIdCharCounts) ? permissionIdCharCounts[permissionId] : 0} characters</td>
+                                <td>{(permissionId in permissionIdCharPercentages) ? permissionIdCharPercentages[permissionId] : 0}%</td>
+                             </tr>);
+        userColorKey.push(userColorRow);
     }
-    return (<ul style={{ listStyleType: "square" }}>{userColorKey}</ul>);
+    return (<table>{userColorKey}</table>);
 }
 
 function GoogleDocQuotes() {
