@@ -16,8 +16,18 @@ function VisitorOnlyRoute({ user }) {
 
 function UserOnlyRoute({ user, setUser }) {
     if (user) return (<>
+    <nav className="navbar">
+    <div className="navbar-left">
+    <h2>Google Doc Authors</h2>
+    <Link to="/">Documents</Link>
     <Link to="/authors">Authors</Link>
+    </div>
+
+    <div className="navbar-right">
     <GoogleLogout setUser={setUser} />
+    </div>
+    </nav>
+
     <Outlet />
     </>);
     return (<Navigate to="/login" replace />);
