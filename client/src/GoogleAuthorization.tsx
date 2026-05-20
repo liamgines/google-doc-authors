@@ -45,7 +45,13 @@ function GoogleAuthorization({ setUser }) {
         return (() => { document.body.removeChild(script); });
     }, []);
 
-    return (<button onClick={authorize}>Sign in with Google</button>);
+    return (
+        <div className="login-center">
+            <h1>Welcome</h1>
+            <p>Sign in to analyze your Google Docs</p>
+            <button onClick={authorize}>Sign in with Google</button>
+        </div>
+    );
 }
 
 export default GoogleAuthorization;

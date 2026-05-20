@@ -1,0 +1,17 @@
+html, body, div#root {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    background-color: #eeeeee;
+}
+
+.login-center {
+    margin: auto auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 320px;
+    height: 240px;
+    background-color: #ffffff;
+}
