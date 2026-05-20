@@ -31,3 +31,9 @@ html, body, div#root {
 .navbar-left > * {
     margin-right: 26px;
 }
+
+.documents-list {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+}

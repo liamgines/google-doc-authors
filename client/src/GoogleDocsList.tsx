@@ -93,8 +93,10 @@ function GoogleDocsList({ user, setUser }) {
     }, [analyzingDocs]);
 
     return (<>
+    <div className="documents-list">
         <GoogleDocsPicker user={user} setUser={setUser} setGoogleDocs={setGoogleDocs} />
         <GoogleDocsTable googleDocs={googleDocs} setUser={setUser} setGoogleDocs={setGoogleDocs} />
+    </div>
     </>);
 }
 

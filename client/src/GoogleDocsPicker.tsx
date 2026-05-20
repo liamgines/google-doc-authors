@@ -58,13 +58,15 @@ function GoogleDocsPicker({ user, setUser, setGoogleDocs }) {
         if (picker) picker.visible = true;
     }
 
-    if (!renderPicker) return (<button onClick={async () => { await pick(); setRenderPicker(true); }}>Choose from Google Drive</button>);
+    if (!renderPicker) return (<div className="drive-button"><button onClick={async () => { await pick(); setRenderPicker(true); }}>Choose from Google Drive</button></div>);
     return (<>
+        <div className="drive-button">
         <button onClick={pick}>Choose from Google Drive</button>
         <DrivePicker client-id={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID} app-id={import.meta.env.PUBLIC_GOOGLE_APP_ID} developer-key={import.meta.env.PUBLIC_GOOGLE_PICKER_API_KEY} oauth-token={user.accessToken}
                      prompt="none" max-items={1} onPicked={listAddDoc}>
             <DrivePickerDocsView mime-types="application/vnd.google-apps.document" mode="DocsViewMode.LIST" select-folder-enabled="false" view-id="DOCUMENTS" />
         </DrivePicker>
+        </div>
     </>);
 }
 
