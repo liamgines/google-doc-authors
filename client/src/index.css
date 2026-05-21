@@ -37,3 +37,29 @@ html, body, div#root {
     display: flex;
     flex-direction: column;
 }
+
+.document-quotes {
+    display: flex;
+    align-items: start;
+}
+
+.document-text {
+    margin: 0 auto;
+    background-color: white;
+    width: 820px;
+    height: 92vh;
+    overflow-x: auto;
+    overflow-y: scroll;
+}
+
+.document-table {
+    background-color: white;
+    height: 92vh;
+    overflow-x: auto;
+    overflow-y: scroll;
+}
+
+/* https://stackoverflow.com/a/1014958 */
+body:has(.document-quotes) {
+    overflow: hidden;
+}

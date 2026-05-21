@@ -94,8 +94,14 @@ function GoogleDocQuotes() {
         return (<span key={i++} id={permissionId} title={hoverText} style={{ backgroundColor: userColor, whiteSpace: "pre-line" }}>{quote.text}</span>);
     });
     return (<>
-        <p id="quotes">{quoteSpans}</p>
-        <UserColorKey permissionIdUsers={permissionIdUsers} permissionIdColors={permissionIdColors} permissionIdCharCounts={permissionIdCharCounts} permissionIdCharPercentages={permissionIdCharPercentages} />
+    <div className="document-quotes">
+    <div className="document-text">
+    <p id="quotes">{quoteSpans}</p>
+    </div>
+    <div className="document-table">
+    <UserColorKey permissionIdUsers={permissionIdUsers} permissionIdColors={permissionIdColors} permissionIdCharCounts={permissionIdCharCounts} permissionIdCharPercentages={permissionIdCharPercentages} />
+    </div>
+    </div>
     </>);
 }
 
