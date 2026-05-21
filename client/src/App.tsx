@@ -18,7 +18,7 @@ function UserOnlyRoute({ user, setUser }) {
     if (user) return (<>
     <nav className="navbar">
     <div className="navbar-left">
-    <h2>Google Doc Authors</h2>
+    <h2><a href="/">Google Doc Authors</a></h2>
     <Link to="/">Documents</Link>
     <Link to="/authors">Authors</Link>
     </div>
