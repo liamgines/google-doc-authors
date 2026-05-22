@@ -40,21 +40,19 @@ html, body, div#root {
 
 .document-quotes {
     display: flex;
-    align-items: start;
+    overflow: hidden;
 }
 
 .document-text {
     margin: 0 auto;
     background-color: white;
     width: 820px;
-    height: 92vh;
     overflow-x: auto;
     overflow-y: scroll;
 }
 
 .document-table {
     background-color: white;
-    height: 92vh;
     overflow-x: auto;
     overflow-y: scroll;
 }
