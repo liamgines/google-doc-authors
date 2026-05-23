@@ -49,7 +49,7 @@ function GoogleAuthorization({ setUser }) {
         <div className="login-center">
             <h1>Welcome</h1>
             <p>Sign in to analyze your Google Docs</p>
-            <button onClick={authorize}>Sign in with Google</button>
+            <button onClick={authorize}><strong>Sign in with Google</strong></button>
         </div>
     );
 }
