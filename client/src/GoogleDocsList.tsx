@@ -51,10 +51,10 @@ function GoogleDocsTable({ googleDocs, setUser, setGoogleDocs }) {
         const modifiedDate: Date = new Date(googleDoc.modified_time);
         const user = googleDoc.creator;
         return (<tr key={googleDoc.google_id}>
-                    <td><a href={`/docId/${googleDoc.google_id}`}>{googleDoc.name}</a></td>
+                    <td><a href={`/docId/${googleDoc.google_id}`}><p>{googleDoc.name}</p></a></td>
                     <td>{dateToClientString(modifiedDate)}</td>
-                    <td>{(user.photo_link && (<img src={user.photo_link} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />} {user.name}</td>
-                    <td>{googleDoc.analysis_status}</td>
+                    <td><div className="documents-list-photo-name">{(user.photo_link && (<img src={user.photo_link} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />} {user.name}</div></td>
+                    <td className="status-cell">{googleDoc.analysis_status}</td>
                     <td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id, setGoogleDocs) }>Retry</button></td>
                     <td><button onClick={async () => await userDocDelete(googleDoc.google_id) }>Delete</button></td>
                </tr>);
@@ -63,7 +63,7 @@ function GoogleDocsTable({ googleDocs, setUser, setGoogleDocs }) {
     return (
         <table>
             <thead>
-                <tr><th>Name</th><th>Date modified</th><th>Owner</th><th>Status</th><th></th><th></th></tr>
+                <tr><th>Name</th><th>Date modified</th><th>Owner</th><th className="status-cell">Status</th><th></th><th></th></tr>
             </thead>
 
             <tbody>

@@ -90,6 +90,56 @@ button:hover {
     background-color: white;
     display: flex;
     flex-direction: column;
+    border: 1px solid #c4c7c5;
+    border-top: 0px;
+    padding: 15px 8px;
+}
+
+.documents-list a {
+    color: black;
+    text-decoration: none;
+}
+
+.documents-list > .drive-button > button {
+    padding: 7px 7px;
+}
+
+.documents-list > .drive-button {
+    margin-bottom: 14px;
+}
+
+/* https://stackoverflow.com/a/45761854 */
+.documents-list a {
+    display: flex;
+    justify-content: left;
+}
+
+.documents-list th {
+    text-align: left;
+    color: black;
+}
+
+.documents-list .status-cell {
+    text-align: center;
+}
+
+.documents-list img {
+    border-radius: 100%;
+    width: 26px;
+    height: auto;
+}
+
+.documents-list-photo-name {
+    display: flex;
+    align-items: center;
+}
+
+.documents-list-photo-name > * {
+    margin-right: 6px;
+}
+
+.documents-list > table button {
+    padding: 1px 6px;
 }
 
 .document-quotes {
