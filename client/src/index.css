@@ -30,6 +30,18 @@ div#root {
     border: 1px solid #c4c7c5;
 }
 
+button {
+  background: #ffffff;
+  border: 1px solid #c4c7c5;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #f8fafd;
+}
+
 .login-center > h1 {
     margin-bottom: 0px;
 }
@@ -41,27 +53,33 @@ div#root {
 .login-center > button {
   width: 72%;
   padding: 10px 10px;
-  background: #ffffff;
-  border: 1px solid #c4c7c5;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.login-center > button:hover {
-  background: #f8fafd;
 }
 
 .navbar {
     display: flex;
     align-items: center;
     background-color: #ffffff;
+    padding: 0px 8px;
+    border: 1px solid #c4c7c5;
+}
+
+.navbar button {
+    padding: 7px 7px;
 }
 
 .navbar-left {
     margin-right: auto;
     display: flex;
     align-items: center;
+}
+
+.navbar a {
+    color: black;
+    text-decoration: none;
+}
+
+.navbar-left > h2 > a {
+    text-decoration: none;
 }
 
 .navbar-left > * {

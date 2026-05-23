@@ -6,7 +6,7 @@ function GoogleLogout({ setUser }) {
         setUser(null);
     }
 
-    return (<button onClick={logout}>Logout</button>);
+    return (<button onClick={logout}><strong>Logout</strong></button>);
 }
 
 export default GoogleLogout;
