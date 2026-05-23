@@ -7,6 +7,17 @@ html, body, div#root {
     margin: 0px;
 }
 
+body {
+    align-items: center;
+}
+
+/* https://stackoverflow.com/a/14939612 */
+div#root {
+    min-width: 0px;
+    max-width: 1200px;
+    width: 100%;
+}
+
 .login-center {
     margin: auto auto;
     display: flex;
