@@ -145,6 +145,9 @@ button:hover {
 .document-quotes {
     display: flex;
     overflow: hidden;
+    background-color: white;
+    border: 1px solid #c4c7c5;
+    border-top: 0px;
 }
 
 .document-text {
@@ -153,6 +156,11 @@ button:hover {
     width: 820px;
     overflow-x: auto;
     overflow-y: scroll;
+    padding: 5px 40px;
+    font-family: serif;
+    line-height: 1.6;
+    font-size: 18px;
+    border-right: 1px solid #c4c7c5;
 }
 
 .document-table {

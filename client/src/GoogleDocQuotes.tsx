@@ -17,7 +17,7 @@ function hexToRGB(hex: string, alpha: string) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-const USER_COLOR_OPACITY = "0.25";
+const USER_COLOR_OPACITY = "0.20";
 const RGBA_COLORS = HEX_COLORS.map(hex => hexToRGB(hex, USER_COLOR_OPACITY));
 const ORIGINAL_DOC_PERMISSION_ID = "ORIGINAL_DOC";
 const ORIGINAL_DOC_RGBA_COLOR = hexToRGB(ORIGINAL_DOC_HEX_COLOR, USER_COLOR_OPACITY);
