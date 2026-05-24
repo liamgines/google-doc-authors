@@ -50,10 +50,20 @@ function GoogleDocsTable({ googleDocs, setUser, setGoogleDocs }) {
     const rows = googleDocs.map(googleDoc => {
         const modifiedDate: Date = new Date(googleDoc.modified_time);
         const user = googleDoc.creator;
+
+        const userEmailPrefix = user.email ? user.email.split("@")[0] : "";
+        const userDisplayName = userEmailPrefix ? userEmailPrefix : user.name;
+
+        let userHoverInfo = "";
+        if (userEmailPrefix === user.name) userHoverInfo = user.email;
+        else if (user.email && user.name)  userHoverInfo = `${user.name}\n${user.email}`;
+        else if (user.email)               userHoverInfo = `${user.email}`
+        else                               userHoverInfo = `${user.name}`
+
         return (<tr key={googleDoc.google_id}>
                     <td><a href={`/docId/${googleDoc.google_id}`}><p>{googleDoc.name}</p></a></td>
                     <td>{dateToClientString(modifiedDate)}</td>
-                    <td><div className="documents-list-photo-name">{(user.photo_link && (<img src={user.photo_link} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />} {user.name}</div></td>
+                    <td><span title={userHoverInfo}><div className="documents-list-photo-name">{(user.photo_link && (<img src={user.photo_link} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />} {userDisplayName}</div></span></td>
                     <td className="status-cell">{googleDoc.analysis_status}</td>
                     <td><button onClick={async () => await userRefreshAccessAndRequestAnalysis(setUser, googleDoc.google_id, setGoogleDocs) }>Retry</button></td>
                     <td><button onClick={async () => await userDocDelete(googleDoc.google_id) }>Delete</button></td>
