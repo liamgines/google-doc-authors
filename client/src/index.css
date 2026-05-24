@@ -163,6 +163,12 @@ button:hover {
     border-right: 1px solid #c4c7c5;
 }
 
+.document-title {
+    font-family: sans-serif;
+    font-size: 23px;
+    text-align: center;
+}
+
 .document-author-key {
     background-color: white;
     overflow-x: auto;

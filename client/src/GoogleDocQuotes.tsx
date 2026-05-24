@@ -132,6 +132,7 @@ function GoogleDocQuotes() {
     return (<>
     <div className="document-quotes">
     <div className="document-text">
+    <h2 className="document-title">Untitled Document</h2>
     <p id="quotes">{quoteSpans}</p>
     </div>
     <UserColorKey permissionIdUsers={permissionIdUsers} permissionIdColors={permissionIdColors} permissionIdCharCounts={permissionIdCharCounts} permissionIdCharPercentages={permissionIdCharPercentages} />
