@@ -41,6 +41,14 @@ function permissionIdUsersToColorMap(permissionIdUsers: any): any {
     return permissionIdColors;
 }
 
+function userGetEmailPrefix(user: any): string {
+    return user.emailAddress ? user.emailAddress.split("@")[0] : "";
+}
+
+function userGetDisplayName(user: any): string {
+    const userEmailPrefix = userGetEmailPrefix(user);
+    return userEmailPrefix ? userEmailPrefix : user.displayName;
+}
 
 function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharCounts, permissionIdCharPercentages }) {
     let userColorKey = [];
@@ -49,8 +57,18 @@ function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharC
         let user = permissionIdUsers[permissionId];
         let userColor = permissionIdColors[permissionId];
         const userEmail = user.emailAddress ? `${user.emailAddress}` : "";
+
+        const userDisplayName = userGetDisplayName(user);
+        const userEmailPrefix = userGetEmailPrefix(user);
+
+        let userHoverInfo = "";
+        if (userEmailPrefix === user.displayName) userHoverInfo = userEmail;
+        else if (userEmail && user.displayName)   userHoverInfo = `${user.displayName}\n${userEmail}`;
+        else if (userEmail)                       userHoverInfo = `${userEmail}`
+        else                                      userHoverInfo = `${user.displayName}`
+
         /* https://stackoverflow.com/a/12692124 */
-        let userColorRow = (<span title={userEmail}>
+        let userColorRow = (<span title={userHoverInfo}>
                             <div key={i++} className="document-author" style={{ backgroundColor: userColor }}>
                                 <div className="document-author-left">
                                 <div className="document-author-photo">{(user.photoLink && (<img src={user.photoLink} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />}</div>
@@ -59,7 +77,7 @@ function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharC
                                 <div className="document-author-right">
                                 <div><span className="document-author-percent">{(permissionId in permissionIdCharPercentages) ? permissionIdCharPercentages[permissionId] : 0}%</span></div>
                                 <div><span className="document-author-characters">{(permissionId in permissionIdCharCounts) ? permissionIdCharCounts[permissionId] : 0} characters</span></div>
-                                <div className="author-name"><strong>{user.displayName}</strong></div>
+                                <div className="author-name"><strong>{userDisplayName}</strong></div>
                                 </div>
                             </div>
                             </span>);
@@ -94,12 +112,9 @@ function GoogleDocQuotes() {
     const quoteSpans = quotes.map(quote => {
         let permissionId = quote.permissionId;
         let user = permissionIdUsers[permissionId];
-        let userName = user.displayName;
-        let userEmail = user.emailAddress;
-
         let userColor = permissionIdColors[permissionId];
 
-        const hoverText = (userEmail) ? `${userName} (${userEmail})` : userName;
+        const hoverText = userGetDisplayName(user);
         // For displaying whitespace properly: https://stackoverflow.com/a/69436906/32242805
         return (<span key={i++} id={permissionId} title={hoverText} style={{ backgroundColor: userColor, whiteSpace: "pre-line" }}>{quote.text}</span>);
     });
