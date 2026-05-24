@@ -58,7 +58,7 @@ function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharC
         let userColor = permissionIdColors[permissionId];
         const userEmail = user.emailAddress ? `${user.emailAddress}` : "";
 
-        const userDisplayName = userGetDisplayName(user);
+        let userDisplayName = userGetDisplayName(user);
         const userEmailPrefix = userGetEmailPrefix(user);
 
         let userHoverInfo = "";
@@ -66,6 +66,15 @@ function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharC
         else if (userEmail && user.displayName)   userHoverInfo = `${user.displayName}\n${userEmail}`;
         else if (userEmail)                       userHoverInfo = `${userEmail}`
         else                                      userHoverInfo = `${user.displayName}`
+
+        if (permissionId === ANONYMOUS_PERMISSION_ID) {
+            userDisplayName = "All anonymous users";
+            userHoverInfo = userDisplayName;
+        }
+        else if (permissionId === ORIGINAL_DOC_PERMISSION_ID) {
+            userDisplayName = "Original document";
+            userHoverInfo = userDisplayName;
+        }
 
         /* https://stackoverflow.com/a/12692124 */
         let userColorRow = (<span title={userHoverInfo}>
@@ -114,7 +123,9 @@ function GoogleDocQuotes() {
         let user = permissionIdUsers[permissionId];
         let userColor = permissionIdColors[permissionId];
 
-        const hoverText = userGetDisplayName(user);
+        let hoverText = userGetDisplayName(user);
+        if (permissionId === ANONYMOUS_PERMISSION_ID)         hoverText = "All anonymous users";
+        else if (permissionId === ORIGINAL_DOC_PERMISSION_ID) hoverText = "Original document"
         // For displaying whitespace properly: https://stackoverflow.com/a/69436906/32242805
         return (<span key={i++} id={permissionId} title={hoverText} style={{ backgroundColor: userColor, whiteSpace: "pre-line" }}>{quote.text}</span>);
     });
