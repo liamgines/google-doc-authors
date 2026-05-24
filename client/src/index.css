@@ -156,11 +156,16 @@ button:hover {
     width: 820px;
     overflow-x: auto;
     overflow-y: scroll;
-    padding: 5px 40px;
     font-family: serif;
     line-height: 1.6;
     font-size: 18px;
     border-right: 1px solid #c4c7c5;
+}
+
+.document-text > p {
+    padding: 0px 40px 5px 40px;
+    margin-top: 0px;
+    margin-bottom: 35px;
 }
 
 .document-title {
