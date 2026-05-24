@@ -199,7 +199,18 @@ button:hover {
     border-radius: 100%;
 }
 
-.document-author-whitespace {
+.document-authors-top {
+    border-bottom: 1px dotted #c4c7c5;
+}
+
+.document-authors-title {
+    font-size: 23px;
+    margin-bottom: 16px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.document-author-bottom-whitespace {
     border: 0px;
     min-height: 75px;
 }

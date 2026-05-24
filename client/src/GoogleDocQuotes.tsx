@@ -92,7 +92,11 @@ function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharC
                             </span>);
         userColorKey.push(userColorRow);
     }
-    return (<div className="document-author-key">{userColorKey}<div className="document-author document-author-whitespace"></div></div>);
+    return (<div className="document-author-key">
+            <div className="document-author document-authors-top"><h2 className="document-authors-title">Authors</h2></div>
+            {userColorKey}
+            <div className="document-author document-author-bottom-whitespace"></div>
+            </div>);
 }
 
 function GoogleDocQuotes() {
