@@ -29,6 +29,7 @@ function UserOnlyRoute({ user, setUser }) {
     </nav>
 
     <Outlet />
+    <footer></footer>
     </>);
     return (<Navigate to="/login" replace />);
 }

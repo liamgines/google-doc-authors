@@ -224,3 +224,7 @@ button:hover {
 body:has(.document-quotes) {
     overflow: hidden;
 }
+
+footer {
+    min-height: 23px;
+}
