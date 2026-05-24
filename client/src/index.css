@@ -151,7 +151,7 @@ button:hover {
 }
 
 .document-text {
-    margin: 0 auto;
+    margin: 0 0;
     background-color: white;
     width: 820px;
     overflow-x: auto;
@@ -163,10 +163,39 @@ button:hover {
     border-right: 1px solid #c4c7c5;
 }
 
-.document-table {
+.document-author-key {
     background-color: white;
     overflow-x: auto;
     overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.document-author {
+    line-height: 1.6;
+    padding-left: 5px;
+    border-bottom: 1px solid #c4c7c5;
+    border-right: 1px solid #c4c7c5;
+    display: flex;
+}
+
+.document-author-left {
+    display: flex;
+    justify-content: column;
+    align-items: flex-end;
+    margin-right: 6px;
+}
+
+.document-author-photo img {
+    width: 14px;
+    height: auto;
+    border-radius: 100%;
+}
+
+.document-author-whitespace {
+    border: 0px;
+    min-height: 75px;
 }
 
 /* https://stackoverflow.com/a/1014958 */

@@ -48,14 +48,24 @@ function UserColorKey({ permissionIdUsers, permissionIdColors, permissionIdCharC
     for (let permissionId in permissionIdUsers) {
         let user = permissionIdUsers[permissionId];
         let userColor = permissionIdColors[permissionId];
-        let userColorRow = (<tr key={i++}>
-                                <td style={{ backgroundColor: userColor }}>{(user.photoLink && (<img src={user.photoLink} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />} {user.displayName} {user.emailAddress ? `(${user.emailAddress})` : ""}</td>
-                                <td>{(permissionId in permissionIdCharCounts) ? permissionIdCharCounts[permissionId] : 0} characters</td>
-                                <td>{(permissionId in permissionIdCharPercentages) ? permissionIdCharPercentages[permissionId] : 0}%</td>
-                             </tr>);
+        const userEmail = user.emailAddress ? `${user.emailAddress}` : "";
+        /* https://stackoverflow.com/a/12692124 */
+        let userColorRow = (<span title={userEmail}>
+                            <div key={i++} className="document-author" style={{ backgroundColor: userColor }}>
+                                <div className="document-author-left">
+                                <div className="document-author-photo">{(user.photoLink && (<img src={user.photoLink} referrerPolicy="no-referrer" />)) || <img src="/api/public/placeholder_avatar.png" />}</div>
+                                </div>
+
+                                <div className="document-author-right">
+                                <div><span className="document-author-percent">{(permissionId in permissionIdCharPercentages) ? permissionIdCharPercentages[permissionId] : 0}%</span></div>
+                                <div><span className="document-author-characters">{(permissionId in permissionIdCharCounts) ? permissionIdCharCounts[permissionId] : 0} characters</span></div>
+                                <div className="author-name"><strong>{user.displayName}</strong></div>
+                                </div>
+                            </div>
+                            </span>);
         userColorKey.push(userColorRow);
     }
-    return (<table>{userColorKey}</table>);
+    return (<div className="document-author-key">{userColorKey}<div className="document-author document-author-whitespace"></div></div>);
 }
 
 function GoogleDocQuotes() {
@@ -98,9 +108,7 @@ function GoogleDocQuotes() {
     <div className="document-text">
     <p id="quotes">{quoteSpans}</p>
     </div>
-    <div className="document-table">
     <UserColorKey permissionIdUsers={permissionIdUsers} permissionIdColors={permissionIdColors} permissionIdCharCounts={permissionIdCharCounts} permissionIdCharPercentages={permissionIdCharPercentages} />
-    </div>
     </div>
     </>);
 }
