@@ -602,6 +602,7 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
     const tokens = userSession.userTokens as Credentials;
 
     const userdoc = await userDocsTable.getUserDocByGoogleIds(user.google_account_id, docId);
+    const doc = await docsTable.getDocByGoogleId(docId);
     if (!userdoc) return response.status(STATUS_NOT_FOUND).json({ message: "Specified document could not be found." });
     // !userdoc.result indicates null or ""
     else if (!userdoc.result) {
@@ -626,7 +627,7 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
         const permissionIdCharCounts = quotesToPermissionIdCharCounts(quotes);
         const permissionIdCharPercentages = permissionIdCharCountsToPercentages(permissionIdCharCounts);
 
-        const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers, permissionIdCharCounts: permissionIdCharCounts, permissionIdCharPercentages: permissionIdCharPercentages };
+        const googleDoc = { quotes: quotes, permissionIdUsers: permissionIdUsers, permissionIdCharCounts: permissionIdCharCounts, permissionIdCharPercentages: permissionIdCharPercentages, name: doc.name };
 
         // Failed dependency indicates that the previous analysis request failed. Service unavailable indicates that the previous analysis request is still being processed.
         const errorCode = (userdoc.result === null) ? STATUS_FAILED_DEPENDENCY : STATUS_SERVICE_UNAVAILABLE;
@@ -634,7 +635,7 @@ app.get("/api/docId/:id", requestIsAuthorizedWithGoogle, async (request: Request
     }
 
     const googleDoc = JSON.parse(await userDocsTable.getResult(userdoc.user_id, userdoc.doc_id));
-    return response.json(googleDoc);
+    return response.json({... googleDoc, name: doc.name });
 });
 
 app.get("/api/docIds", requestIsAuthorizedWithGoogle, async (request: Request, response: Response, next: NextFunction) => {
