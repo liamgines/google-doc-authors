@@ -104,7 +104,10 @@ function GoogleDocsList({ user, setUser }) {
 
     return (<>
     <div className="documents-list">
+        <div className="documents-list-top">
+        <h2 className="documents-list-title">Documents</h2>
         <GoogleDocsPicker user={user} setUser={setUser} setGoogleDocs={setGoogleDocs} />
+        </div>
         <GoogleDocsTable googleDocs={googleDocs} setUser={setUser} setGoogleDocs={setGoogleDocs} />
     </div>
     </>);

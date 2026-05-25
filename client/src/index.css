@@ -95,17 +95,30 @@ button:hover {
     padding: 15px 8px;
 }
 
+.documents-list-top {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.documents-list-title {
+    margin-right: 18px;
+    font-size: 21px;
+    padding-left: 2px;
+}
+
 .documents-list a {
     color: black;
     text-decoration: none;
 }
 
-.documents-list > .drive-button > button {
+.documents-list .drive-button > button {
     padding: 7px 7px;
 }
 
-.documents-list > .drive-button {
-    margin-bottom: 14px;
+.documents-list .drive-button {
+    margin-bottom: auto;
+    margin-top: auto;
 }
 
 /* https://stackoverflow.com/a/45761854 */
