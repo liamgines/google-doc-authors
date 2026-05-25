@@ -33,7 +33,7 @@ function dateToClientString(date: Date) {
 }
 
 function GoogleDocsTable({ googleDocs, setUser, setGoogleDocs }) {
-    if (!googleDocs.length) return (<p>No docs yet.</p>);
+    if (!googleDocs.length) return (<p>No documents yet. Choose one to get started.</p>);
 
     async function userDocDelete(docId: string) {
         try {
