@@ -15,7 +15,10 @@ function dateToComponents(date: Date) {
     const year: string = date.toLocaleString("default", { year: "numeric" });
 
     const hour: string = date.toLocaleString("default", { hour: "numeric" });
-    const minute: string = date.toLocaleString("default", { minute: "2-digit" });
+    let minute: string = date.toLocaleString("default", { minute: "2-digit" });
+
+    // Pad with zeroes
+    while (minute.length < 2) minute = "0" + minute;
 
     const hourClock = hour.split(" ");
     const clock = hourClock[1];
