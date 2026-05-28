@@ -2,6 +2,8 @@ Google Doc Authors
 ========
 A web app for examining authorship in Google Docs.
 
+![Demo](demo.gif)
+
 Installation
 --------
 First, ensure you have Node.js and Docker installed. Then, run the following commands:
