@@ -3,6 +3,9 @@ Google Doc Authors
 A web app for examining authorship in Google Docs.
 
 ![Demo](demo.gif)
+![Screenshot](1.png)
+![Screenshot](2.png)
+![Screenshot](3.png)
 
 Installation
 --------
