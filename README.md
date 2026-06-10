@@ -7,6 +7,10 @@ A web app for examining authorship in Google Docs.
 ![Screenshot](2.png)
 ![Screenshot](3.png)
 
+Remarks
+--------
+I built this so you can easily see what everyone added to a document in Google Drive. This might be helpful to anyone that's working on a group assignment.
+
 Installation
 --------
 First, ensure you have Node.js and Docker installed. Then, run the following commands:
