@@ -9,7 +9,8 @@ A web app for examining authorship in Google Docs.
 
 Remarks
 --------
-I built this so you can easily see what everyone added to a document in Google Drive. This might be helpful to anyone that's working on a group assignment.
+I built this so you can easily see what everyone added to a document in Google Drive.<br>
+This might be helpful to anyone that's working on a group assignment.
 
 Installation
 --------
