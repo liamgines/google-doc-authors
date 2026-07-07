@@ -7,6 +7,11 @@ A web app for examining authorship in Google Docs.
 ![Screenshot](2.png)
 ![Screenshot](3.png)
 
+Remarks
+--------
+I built this to visualize contributions in documents.<br>
+This might be helpful if you're working on a group assignment and want to know what everyone wrote.
+
 Installation
 --------
 First, ensure you have Node.js and Docker installed. Then, run the following commands:
