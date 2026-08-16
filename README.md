@@ -1,6 +1,6 @@
 Google Doc Authors
 ========
-A web app for analyzing & visualizing contributions in Google Docs.
+A web app for analyzing and visualizing writing contributions in Google Docs.
 
 ![Demo](demo.gif)
 ![Screenshot](1.png)
