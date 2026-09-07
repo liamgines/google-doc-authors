@@ -1,0 +1,47 @@
+# https://docs.docker.com/compose/gettingstarted/
+services:
+  db:
+    image: postgres
+    # https://stackoverflow.com/a/55835081
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+    volumes:
+      - postgres-data:/var/lib/postgresql
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: app
+
+    ports:
+      - "5432:5432"
+
+  server:
+    build:
+      context: .
+      dockerfile: server.Dockerfile
+
+    ports:
+      - "${PUBLIC_SERVER_PORT}:${PUBLIC_SERVER_PORT}"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+  client:
+    build:
+      context: .
+      dockerfile: client.Dockerfile
+
+    ports:
+      - "5173:5173"
+
+    depends_on:
+      - server
+
+volumes:
+  postgres-data:
