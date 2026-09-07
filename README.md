@@ -80,6 +80,10 @@ docker compose up --detach
 
 With everything running, you can visit `http://localhost:{client_port}` to test the app.
 
+> [!IMPORTANT]
+> If you get an error like `The API developer key is invalid` after clicking the `+ Choose from Google Drive` button, your browser might be blocking cookies.
+> To fix this on Firefox, consider disabling Enhanced Tracking Protection on `http://localhost:{client_port}` by adding the domain as an exception in your settings.
+
 To stop the app:
 ```
 docker compose down
