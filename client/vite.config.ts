@@ -11,6 +11,6 @@ export default defineConfig(({ mode }) => {
       envDir: envDirectory,
       envPrefix: envPrefix,
       plugins: [react()],
-      server: { proxy: { "/api": `http://localhost:${env.PUBLIC_SERVER_PORT}` } }
+      server: { proxy: { "/api": `http://server:${env.PUBLIC_SERVER_PORT}` } }
   }
 })
