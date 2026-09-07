@@ -14,7 +14,7 @@ This might be helpful if you're working on a group assignment and want to know w
 
 Installation
 --------
-First, ensure you have Node.js and Docker installed. Then, run the following commands:
+First, run the following commands:
 ```
 git clone <repository_url>
 cd google-doc-authors
@@ -37,23 +37,12 @@ PRIVATE_EXPRESS_SESSION_SECRET={secret_string}
 A variable prefixed with `PUBLIC_` means both the server and client can access it.<br>
 A variable prefixed with `PRIVATE_` means only the server can access it.
 
-Database
---------
-Install the `postgres` image using Docker Desktop. Then initialize the database:
-```
-cd server
-npm run start-database
-npm run seed-database
-```
-
-To stop the database:
-```
-npm run stop-database
-```
-
 ### Obtaining the Connection String
-By default, the connection string is `postgres://postgres:password@localhost:5432/app`.<br>
-If you want to change this, you can update `server/compose.yaml`.
+By default, the connection string is `postgres://postgres:password@db:5432/app`.<br>
+If you want to change this, you can update `compose.yaml`.
+
+> [!IMPORTANT]
+> Before proceeding with the following sections, note that `client_port` is 5173 by default.
 
 Google Cloud
 --------
@@ -81,22 +70,17 @@ You can now click `Show key` next to the API key you created to view it.
 Use the search bar on Google Cloud Console to find the `Google Auth Platform` page.<br>
 Once you've found it, click `Audience` > `Add users` and provide at least one email that you want to use for testing.
 
-Server
+App
 --------
-To run the server:
+To run the app, ensure you have Docker installed. Then, run the following commands:
 ```
-cd server
-npm install
-npm run server
-```
-
-Client
---------
-To run the client:
-```
-cd client
-npm install
-npm run client
+docker compose build
+docker compose up --detach
 ```
 
 With everything running, you can visit `http://localhost:{client_port}` to test the app.
+
+To stop the app:
+```
+docker compose down
+```
